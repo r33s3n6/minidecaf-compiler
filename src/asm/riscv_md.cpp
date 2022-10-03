@@ -224,10 +224,10 @@ void RiscvDesc::emitTac(Tac *t) {
         emitUnaryTac(RiscvInstr::NEG, t);
         break;
     case Tac::LNOT:
-        emitUnaryTac(RiscvInstr::LNOT, t);
+        emitUnaryTac(RiscvInstr::SEQZ, t);
         break;
     case Tac::BNOT:
-        emitUnaryTac(RiscvInstr::BNOT, t);
+        emitUnaryTac(RiscvInstr::NOT, t);
         break;
     
     case Tac::ADD:
@@ -243,8 +243,34 @@ void RiscvDesc::emitTac(Tac *t) {
         emitBinaryTac(RiscvInstr::DIV, t);
         break;
     case Tac::MOD:
-        emitBinaryTac(RiscvInstr::MOD, t);
+        emitBinaryTac(RiscvInstr::REM, t);
         break;
+    
+    case Tac::EQU:
+        emitBinaryTac(RiscvInstr::_SEQ, t);
+        break;
+    case Tac::NEQ:
+        emitBinaryTac(RiscvInstr::_SNE, t);
+        break;
+    case Tac::GRT:
+        emitBinaryTac(RiscvInstr::SGT, t);
+        break;
+    case Tac::LES:
+        emitBinaryTac(RiscvInstr::SLT, t);
+        break;
+    case Tac::GEQ:
+        emitBinaryTac(RiscvInstr::_SGE, t);
+        break;
+    case Tac::LEQ:
+        emitBinaryTac(RiscvInstr::_SLE, t);
+        break;
+    case Tac::LAND:
+        emitBinaryTac(RiscvInstr::_SLAND, t);
+        break;
+    case Tac::LOR:
+        emitBinaryTac(RiscvInstr::_SLOR, t);
+        break;
+    
 
     default:
         mind_assert(false); // should not appear inside a basic block
@@ -300,7 +326,42 @@ void RiscvDesc::emitBinaryTac(RiscvInstr::OpCode op, Tac *t) {
     int r2 = getRegForRead(t->op2.var, r1, liveness);
     int r0 = getRegForWrite(t->op0.var, r1, r2, liveness);
 
-    addInstr(op, _reg[r0], _reg[r1], _reg[r2], 0, EMPTY_STR, {});
+    if (op < RiscvInstr::__PSEUDO_INSTRUCTION){
+        addInstr(op, _reg[r0], _reg[r1], _reg[r2], 0, EMPTY_STR, {});
+    }else{
+        switch(op){
+        case RiscvInstr::_SEQ:
+            addInstr(RiscvInstr::SUB, _reg[r0], _reg[r1], _reg[r2], 0, EMPTY_STR, {});
+            addInstr(RiscvInstr::SEQZ, _reg[r0], _reg[r0], NULL, 0, EMPTY_STR, {});
+            break;
+        case RiscvInstr::_SNE:
+            addInstr(RiscvInstr::SUB, _reg[r0], _reg[r1], _reg[r2], 0, EMPTY_STR, {});
+            addInstr(RiscvInstr::SNEZ, _reg[r0], _reg[r0], NULL, 0, EMPTY_STR, {});
+            break;
+        case RiscvInstr::_SGE:
+            addInstr(RiscvInstr::SLT, _reg[r0], _reg[r1], _reg[r2], 0, EMPTY_STR, {});
+            addInstr(RiscvInstr::XORI, _reg[r0], _reg[r0], NULL, 1, EMPTY_STR, {});
+            break;
+        case RiscvInstr::_SLE:
+            addInstr(RiscvInstr::SGT, _reg[r0], _reg[r1], _reg[r2], 0, EMPTY_STR, {});
+            addInstr(RiscvInstr::XORI, _reg[r0], _reg[r0], NULL, 1, EMPTY_STR, {});
+            break;
+        case RiscvInstr::_SLOR:
+            addInstr(RiscvInstr::OR, _reg[r0], _reg[r1], _reg[r2], 0, EMPTY_STR, {});
+            addInstr(RiscvInstr::SNEZ, _reg[r0], _reg[r0], NULL, 0, EMPTY_STR, {});
+            break;
+        case RiscvInstr::_SLAND:
+            addInstr(RiscvInstr::SNEZ, _reg[r0], _reg[r1], NULL, 0, EMPTY_STR, {});
+            addInstr(RiscvInstr::SUB, _reg[r0], _reg[RiscvReg::ZERO], _reg[r0], 0, EMPTY_STR, {});
+            addInstr(RiscvInstr::AND, _reg[r0], _reg[r0], _reg[r2], 0, EMPTY_STR, {});
+            addInstr(RiscvInstr::SNEZ, _reg[r0], _reg[r0], NULL, 0, EMPTY_STR, {});
+            break;
+        default:
+            std::cerr << "not binary pseudo instruction: " << op << std::endl;
+            mind_assert(false);
+        }
+    }
+    
 }
 
 /* Outputs a single instruction line.
@@ -460,6 +521,9 @@ void RiscvDesc::emitProlog(Label entry_label, int frame_size) {
 void RiscvDesc::emitInstr(RiscvInstr *i) {
     if (i->cancelled)
         return;
+    
+    mind_assert(i->op_code < RiscvInstr::__PSEUDO_INSTRUCTION);
+
     std::ostringstream oss;
     oss << std::left << std::setw(6);
 
@@ -476,11 +540,15 @@ void RiscvDesc::emitInstr(RiscvInstr *i) {
         oss << "neg" << i->r0->name << ", " << i->r1->name;
         break;
 
-    case RiscvInstr::LNOT:
+    case RiscvInstr::SEQZ:
         oss << "seqz" << i->r0->name << ", " << i->r1->name;
         break;
+    
+    case RiscvInstr::SNEZ:
+        oss << "snez" << i->r0->name << ", " << i->r1->name;
+        break;
 
-    case RiscvInstr::BNOT:
+    case RiscvInstr::NOT:
         oss << "not" << i->r0->name << ", " << i->r1->name;
         break;
 
@@ -516,8 +584,32 @@ void RiscvDesc::emitInstr(RiscvInstr *i) {
         oss << "div" << i->r0->name << ", " << i->r1->name << ", " << i->r2->name;
         break;
 
-    case RiscvInstr::MOD:
+    case RiscvInstr::REM:
         oss << "rem" << i->r0->name << ", " << i->r1->name << ", " << i->r2->name;
+        break;
+
+    case RiscvInstr::SLT:
+        oss << "slt" << i->r0->name << ", " << i->r1->name << ", " << i->r2->name;
+        break;
+
+    case RiscvInstr::SGT:
+        oss << "sgt" << i->r0->name << ", " << i->r1->name << ", " << i->r2->name;
+        break;
+
+    case RiscvInstr::AND:
+        oss << "and" << i->r0->name << ", " << i->r1->name << ", " << i->r2->name;
+        break;
+
+    case RiscvInstr::OR:
+        oss << "or" << i->r0->name << ", " << i->r1->name << ", " << i->r2->name;
+        break;
+
+    case RiscvInstr::XOR:
+        oss << "xor" << i->r0->name << ", " << i->r1->name << ", " << i->r2->name;
+        break;
+
+    case RiscvInstr::XORI:
+        oss << "xori" << i->r0->name << ", " << i->r1->name << ", " << i->i;
         break;
     
     case RiscvInstr::BEQZ:
@@ -527,6 +619,7 @@ void RiscvDesc::emitInstr(RiscvInstr *i) {
     case RiscvInstr::J:
         oss << "j" << i->l;
         break;
+
 
     default:
         mind_assert(false); // other instructions not supported

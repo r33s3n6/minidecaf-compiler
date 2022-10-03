@@ -79,7 +79,7 @@ struct Tac {
         NEQ,
         LES,
         LEQ,
-        GTR,
+        GRT,
         GEQ,
         NEG,
         LAND,
@@ -129,7 +129,7 @@ struct Tac {
     static Tac *Neq(Temp dest, Temp op1, Temp op2);
     static Tac *Les(Temp dest, Temp op1, Temp op2);
     static Tac *Leq(Temp dest, Temp op1, Temp op2);
-    static Tac *Gtr(Temp dest, Temp op1, Temp op2);
+    static Tac *Grt(Temp dest, Temp op1, Temp op2);
     static Tac *Geq(Temp dest, Temp op1, Temp op2);
     static Tac *LAnd(Temp dest, Temp op1, Temp op2);
     static Tac *LOr(Temp dest, Temp op1, Temp op2);

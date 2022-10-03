@@ -298,7 +298,7 @@ Temp TransHelper::genLeq(Temp a, Temp b) {
     return c;
 }
 
-/* Appends a Gtr tac node to the current list.
+/* Appends a Grt tac node to the current list.
  *
  * PARAMETERS:
  *   a    - operand 1
@@ -306,9 +306,9 @@ Temp TransHelper::genLeq(Temp a, Temp b) {
  * RETURNS:
  *   the temporary containing the result of (a > b)
  */
-Temp TransHelper::genGtr(Temp a, Temp b) {
+Temp TransHelper::genGrt(Temp a, Temp b) {
     Temp c = getNewTempI4();
-    chainUp(Tac::Gtr(c, a, b));
+    chainUp(Tac::Grt(c, a, b));
     return c;
 }
 

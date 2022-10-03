@@ -59,7 +59,7 @@ void BasicBlock::computeDefAndLiveUse(void) {
         case Tac::NEQ:
         case Tac::LES:
         case Tac::LEQ:
-        case Tac::GTR:
+        case Tac::GRT:
         case Tac::GEQ:
         case Tac::LAND:
         case Tac::LOR:
@@ -207,7 +207,7 @@ void BasicBlock::analyzeLiveness(void) {
         case Tac::NEQ:
         case Tac::LES:
         case Tac::LEQ:
-        case Tac::GTR:
+        case Tac::GRT:
         case Tac::GEQ:
         case Tac::LAND:
         case Tac::LOR:

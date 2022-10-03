@@ -30,27 +30,27 @@ namespace ast {
 class Visitor {
   public:
     // Expressions
-    virtual void visit(AddExpr *) {}
-    virtual void visit(AndExpr *) {}
+    virtual void visit(AddExpr *)    {}
+    virtual void visit(AndExpr *)    {}
     virtual void visit(AssignExpr *) {}
-    virtual void visit(IfExpr *) {}
-    virtual void visit(OrExpr *) {}
-    virtual void visit(BoolConst *) {}
-    virtual void visit(DivExpr *) {}
-    virtual void visit(EquExpr *) {}
-    virtual void visit(GeqExpr *) {}
-    virtual void visit(GrtExpr *) {}
-    virtual void visit(NeqExpr *) {}
-    virtual void visit(IntConst *) {}
-    virtual void visit(LeqExpr *) {}
-    virtual void visit(LesExpr *) {}
+    virtual void visit(IfExpr *)     {}
+    virtual void visit(OrExpr *)     {}
+    virtual void visit(BoolConst *)  {}
+    virtual void visit(DivExpr *)    {}
+    virtual void visit(EquExpr *)    {}
+    virtual void visit(GeqExpr *)    {}
+    virtual void visit(GrtExpr *)    {}
+    virtual void visit(NeqExpr *)    {}
+    virtual void visit(IntConst *)   {}
+    virtual void visit(LeqExpr *)    {}
+    virtual void visit(LesExpr *)    {}
     virtual void visit(LvalueExpr *) {}
-    virtual void visit(ModExpr *) {}
-    virtual void visit(MulExpr *) {}
-    virtual void visit(NegExpr *) {}
-    virtual void visit(NotExpr *) {}
+    virtual void visit(ModExpr *)    {}
+    virtual void visit(MulExpr *)    {}
+    virtual void visit(NegExpr *)    {}
+    virtual void visit(NotExpr *)    {}
     virtual void visit(BitNotExpr *) {}
-    virtual void visit(SubExpr *) {}
+    virtual void visit(SubExpr *)    {}
 
     // Lvalues
     virtual void visit(VarRef *) {}

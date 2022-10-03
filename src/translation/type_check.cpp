@@ -41,11 +41,21 @@ class SemPass2 : public ast::Visitor {
     virtual void visit(ast::NotExpr *);
     virtual void visit(ast::BitNotExpr *);
     // binary operator
-    virtual void visit(ast::AddExpr *);
-    virtual void visit(ast::SubExpr *);
-    virtual void visit(ast::MulExpr *);
-    virtual void visit(ast::DivExpr *);
-    virtual void visit(ast::ModExpr *);
+    void visitBinaryExpr(ast::BinaryExprBase* e);
+    virtual void visit(ast::AddExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::SubExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::MulExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::DivExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::ModExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::EquExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::NeqExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::LeqExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::GeqExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::LesExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::GrtExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::AndExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::OrExpr * e)  { visitBinaryExpr(e); }
+
 
     // Visiting statements
     virtual void visit(ast::VarDecl *);
@@ -95,72 +105,12 @@ static void expect(ast::Expr *e, Type *t) {
  */
 void SemPass2::visit(ast::IntConst *e) { e->ATTR(type) = BaseType::Int; }
 
-/* Visits an ast::AddExpr node.
+/* Visits an all node inherited from ast::BinaryExprBase
  *
  * PARAMETERS:
- *   e     - the ast::AddExpr node
+ *   e     - the ast::BinaryExprBase node
  */
-void SemPass2::visit(ast::AddExpr *e) {
-    e->e1->accept(this);
-    expect(e->e1, BaseType::Int);
-
-    e->e2->accept(this);
-    expect(e->e2, BaseType::Int);
-
-    e->ATTR(type) = BaseType::Int;
-}
-
-/* Visits an ast::SubExpr node.
- *
- * PARAMETERS:
- *   e     - the ast::SubExpr node
- */
-void SemPass2::visit(ast::SubExpr *e) {
-    e->e1->accept(this);
-    expect(e->e1, BaseType::Int);
-
-    e->e2->accept(this);
-    expect(e->e2, BaseType::Int);
-
-    e->ATTR(type) = BaseType::Int;
-}
-
-/* Visits an ast::MulExpr node.
- *
- * PARAMETERS:
- *   e     - the ast::MulExpr node
- */
-void SemPass2::visit(ast::MulExpr *e) {
-    e->e1->accept(this);
-    expect(e->e1, BaseType::Int);
-
-    e->e2->accept(this);
-    expect(e->e2, BaseType::Int);
-
-    e->ATTR(type) = BaseType::Int;
-}
-
-/* Visits an ast::DivExpr node.
- *
- * PARAMETERS:
- *   e     - the ast::DivExpr node
- */
-void SemPass2::visit(ast::DivExpr *e) {
-    e->e1->accept(this);
-    expect(e->e1, BaseType::Int);
-
-    e->e2->accept(this);
-    expect(e->e2, BaseType::Int);
-
-    e->ATTR(type) = BaseType::Int;
-}
-
-/* Visits an ast::ModExpr node.
- *
- * PARAMETERS:
- *   e     - the ast::ModExpr node
- */
-void SemPass2::visit(ast::ModExpr *e) {
+void SemPass2::visitBinaryExpr(ast::BinaryExprBase * e) {
     e->e1->accept(this);
     expect(e->e1, BaseType::Int);
 

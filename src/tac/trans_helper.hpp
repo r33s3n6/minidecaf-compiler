@@ -49,7 +49,7 @@ class TransHelper {
     Temp genNeq(Temp, Temp);
     Temp genLes(Temp, Temp);
     Temp genLeq(Temp, Temp);
-    Temp genGtr(Temp, Temp);
+    Temp genGrt(Temp, Temp);
     Temp genGeq(Temp, Temp);
     Temp genNeg(Temp);
     // Logical

@@ -86,14 +86,24 @@ struct RiscvInstr : public Instr {
         // instructions/pseudo instructions
         // unary operator
         NEG,
-        LNOT,
-        BNOT,
+        NOT,
+        SNEZ,
+        SEQZ,
         // binary operator
         ADD,
         SUB,
         MUL,
         DIV,
-        MOD,
+        REM,
+
+        SLT,
+        SGT,
+        AND,
+        OR,
+        XOR,
+        // binary operator with immediate
+        XORI,
+
         // branch
         J,
         BEQZ,
@@ -102,6 +112,17 @@ struct RiscvInstr : public Instr {
         LI,
         SW,
         MOVE,
+
+        __PSEUDO_INSTRUCTION,
+        // our pseudo instructions
+        _SEQ,
+        _SNE,
+        // _LES,
+        _SLE,
+        // _SGT,
+        _SGE,
+        _SLAND,
+        _SLOR,
         // You could add other instructions/pseudo instructions here
     } op_code; // operation code
 

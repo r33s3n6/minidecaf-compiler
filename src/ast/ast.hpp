@@ -471,7 +471,6 @@ class NullExpr : public Expr {
 };
 
 class BinaryExprBase : public Expr {
-
     virtual void accept(Visitor *)=0;
     virtual void dumpTo(std::ostream &)=0;
   public:
@@ -484,16 +483,12 @@ class BinaryExprBase : public Expr {
  * SERIALIZED FORM:
  *   (add EXPR1 EXPR2)
  */
-class AddExpr : public Expr {
+class AddExpr : public BinaryExprBase {
   public:
     AddExpr(Expr *e1, Expr *e2, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
-
-  public:
-    Expr *e1;
-    Expr *e2;
 };
 
 /* Node representing a substraction.
@@ -501,16 +496,12 @@ class AddExpr : public Expr {
  * SERIALIZED FORM:
  *   (sub EXPR1 EXPR2)
  */
-class SubExpr : public Expr {
+class SubExpr : public BinaryExprBase {
   public:
     SubExpr(Expr *e1, Expr *e2, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
-
-  public:
-    Expr *e1;
-    Expr *e2;
 };
 
 /* Node representing a multiplcation.
@@ -518,16 +509,12 @@ class SubExpr : public Expr {
  * SERIALIZED FORM:
  *   (mul EXPR1 EXPR2)
  */
-class MulExpr : public Expr {
+class MulExpr : public BinaryExprBase {
   public:
     MulExpr(Expr *e1, Expr *e2, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
-
-  public:
-    Expr *e1;
-    Expr *e2;
 };
 
 /* Node representing a division.
@@ -535,16 +522,12 @@ class MulExpr : public Expr {
  * SERIALIZED FORM:
  *   (div EXPR1 EXPR2)
  */
-class DivExpr : public Expr {
+class DivExpr : public BinaryExprBase {
   public:
     DivExpr(Expr *e1, Expr *e2, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
-
-  public:
-    Expr *e1;
-    Expr *e2;
 };
 
 /* Node representing a modular operation.
@@ -552,32 +535,24 @@ class DivExpr : public Expr {
  * SERIALIZED FORM:
  *   (mod EXPR1 EXPR2)
  */
-class ModExpr : public Expr {
+class ModExpr : public BinaryExprBase {
   public:
     ModExpr(Expr *e1, Expr *e2, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
-
-  public:
-    Expr *e1;
-    Expr *e2;
 };
 /* Node representing a greater-than comparision.
  *
  * SERIALIZED FORM:
  *   (grt EXPR1 EXPR2)
  */
-class GrtExpr : public Expr {
+class GrtExpr : public BinaryExprBase {
   public:
     GrtExpr(Expr *e1, Expr *e2, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
-
-  public:
-    Expr *e1;
-    Expr *e2;
 };
 
 /* Node representing a greater-than-or-equal-to comparision.
@@ -585,16 +560,12 @@ class GrtExpr : public Expr {
  * SERIALIZED FORM:
  *   (geq EXPR1 EXPR2)
  */
-class GeqExpr : public Expr {
+class GeqExpr : public BinaryExprBase {
   public:
     GeqExpr(Expr *e1, Expr *e2, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
-
-  public:
-    Expr *e1;
-    Expr *e2;
 };
 
 /* Node representing a less-than comparision.
@@ -602,16 +573,12 @@ class GeqExpr : public Expr {
  * SERIALIZED FORM:
  *   (les EXPR1 EXPR2)
  */
-class LesExpr : public Expr {
+class LesExpr : public BinaryExprBase {
   public:
     LesExpr(Expr *e1, Expr *e2, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
-
-  public:
-    Expr *e1;
-    Expr *e2;
 };
 
 /* Node representing a less-than-or-equal-to comparision.
@@ -619,16 +586,12 @@ class LesExpr : public Expr {
  * SERIALIZED FORM:
  *   (leq EXPR1 EXPR2)
  */
-class LeqExpr : public Expr {
+class LeqExpr : public BinaryExprBase {
   public:
     LeqExpr(Expr *e1, Expr *e2, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
-
-  public:
-    Expr *e1;
-    Expr *e2;
 };
 
 /* Node representing an equivalence comparision.
@@ -636,32 +599,24 @@ class LeqExpr : public Expr {
  * SERIALIZED FORM:
  *   (equ EXPR1 EXPR2)
  */
-class EquExpr : public Expr {
+class EquExpr : public BinaryExprBase {
   public:
     EquExpr(Expr *e1, Expr *e2, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
-
-  public:
-    Expr *e1;
-    Expr *e2;
 };
 /* Node representing an non-equivalence comparision.
  *
  * SERIALIZED FORM:
  *   (neq EXPR1 EXPR2)
  */
-class NeqExpr : public Expr {
+class NeqExpr : public BinaryExprBase {
   public:
     NeqExpr(Expr *e1, Expr *e2, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
-
-  public:
-    Expr *e1;
-    Expr *e2;
 };
 
 /* Node representing a logical-and operation .
@@ -669,16 +624,12 @@ class NeqExpr : public Expr {
  * SERIALIZED FORM:
  *   (and EXPR1 EXPR2)
  */
-class AndExpr : public Expr {
+class AndExpr : public BinaryExprBase {
   public:
     AndExpr(Expr *e1, Expr *e2, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
-
-  public:
-    Expr *e1;
-    Expr *e2;
 };
 
 /* Node representing a logical-or operation .
@@ -686,16 +637,12 @@ class AndExpr : public Expr {
  * SERIALIZED FORM:
  *   (and EXPR1 EXPR2)
  */
-class OrExpr : public Expr {
+class OrExpr : public BinaryExprBase {
   public:
     OrExpr(Expr *e1, Expr *e2, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
-
-  public:
-    Expr *e1;
-    Expr *e2;
 };
 
 class IfExpr : public Expr {

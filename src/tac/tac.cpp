@@ -274,7 +274,7 @@ Tac *Tac::Leq(Temp dest, Temp op1, Temp op2) {
     return t;
 }
 
-/* Creates a Gtr tac.
+/* Creates a Grt tac.
  *
  * NOTE:
  *   greater than
@@ -283,14 +283,14 @@ Tac *Tac::Leq(Temp dest, Temp op1, Temp op2) {
  *   op1  - operand 1
  *   op2  - operand 2
  * RETURNS:
- *   a Gtr tac
+ *   a Grt tac
  */
-Tac *Tac::Gtr(Temp dest, Temp op1, Temp op2) {
+Tac *Tac::Grt(Temp dest, Temp op1, Temp op2) {
     REQUIRE_I4(dest);
     REQUIRE_I4(op1);
     REQUIRE_I4(op2);
 
-    Tac *t = allocateNewTac(Tac::GTR);
+    Tac *t = allocateNewTac(Tac::GRT);
     t->op0.var = dest;
     t->op1.var = op1;
     t->op2.var = op2;
@@ -684,7 +684,7 @@ void Tac::dump(std::ostream &os) {
            << ")";
         break;
 
-    case GTR:
+    case GRT:
         os << "    " << op0.var << " <- (" << op1.var << " > " << op2.var
            << ")";
         break;
