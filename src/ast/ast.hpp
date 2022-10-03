@@ -470,6 +470,15 @@ class NullExpr : public Expr {
     virtual void dumpTo(std::ostream &);
 };
 
+class BinaryExprBase : public Expr {
+
+    virtual void accept(Visitor *)=0;
+    virtual void dumpTo(std::ostream &)=0;
+  public:
+    Expr *e1;
+    Expr *e2;
+};
+
 /* Node representing an addition.
  *
  * SERIALIZED FORM:

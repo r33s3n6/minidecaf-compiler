@@ -84,11 +84,16 @@ struct RiscvInstr : public Instr {
         // assembler directives
         COMMENT,
         // instructions/pseudo instructions
-        ADD,
         // unary operator
         NEG,
         LNOT,
         BNOT,
+        // binary operator
+        ADD,
+        SUB,
+        MUL,
+        DIV,
+        MOD,
         // branch
         J,
         BEQZ,

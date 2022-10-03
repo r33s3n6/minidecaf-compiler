@@ -17,7 +17,7 @@ CC = gcc
 INCLUDES = -I .
 CFLAGS = $(INCLUDES) $(DEFINES)  -g -Wall -pipe -DUSING_GCC
 CXXFLAGS = $(INCLUDES) $(DEFINES)  -g -Wall -pipe -DUSING_GCC
-YFLAGS = -dv
+YFLAGS = -dv -Wcounterexamples
 LDFLAGS = -lm -lgc -g
 CSH = bash
 

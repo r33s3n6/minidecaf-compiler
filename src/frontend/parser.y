@@ -99,7 +99,8 @@ void scan_end();
 %nterm <mind::ast::Expr*>      Expr
 
 /*   SUBSECTION 2.2: associativeness & precedences */
-%nonassoc "?"
+%right "then" "else"
+%nonassoc "?" ":"
 %left     "||"
 %left     "&&"
 %left     "==" "!="
@@ -171,7 +172,7 @@ CompStmt    : "{" StmtList "}"
 WhileStmt   : "while" "(" Expr ")" Stmt
                 { $$ = new ast::WhileStmt($3, $5, POS(@1)); }
             ;
-IfStmt      : "if" "(" Expr ")" Stmt
+IfStmt      : "if" "(" Expr ")" Stmt %prec "then"
                 { $$ = new ast::IfStmt($3, $5, new ast::EmptyStmt(POS(@5)), POS(@1)); }
             | "if" "(" Expr ")" Stmt "else" Stmt
                 { $$ = new ast::IfStmt($3, $5, $7, POS(@1)); }
@@ -189,6 +190,30 @@ Expr        : ICONST
                 { $$ = $2; }
             | Expr "+" Expr
                 { $$ = new ast::AddExpr($1, $3, POS(@2)); }
+            | Expr "-" Expr
+                { $$ = new ast::SubExpr($1, $3, POS(@2)); }
+            | Expr "*" Expr
+                { $$ = new ast::MulExpr($1, $3, POS(@2)); }
+            | Expr "/" Expr
+                { $$ = new ast::DivExpr($1, $3, POS(@2)); }
+            | Expr "%" Expr
+                { $$ = new ast::ModExpr($1, $3, POS(@2)); }
+            | Expr "==" Expr
+                { $$ = new ast::EquExpr($1, $3, POS(@2)); }
+            | Expr "!=" Expr
+                { $$ = new ast::NeqExpr($1, $3, POS(@2)); }
+            | Expr "<=" Expr
+                { $$ = new ast::LeqExpr($1, $3, POS(@2)); }
+            | Expr ">=" Expr
+                { $$ = new ast::GeqExpr($1, $3, POS(@2)); }
+            | Expr "<" Expr
+                { $$ = new ast::LesExpr($1, $3, POS(@2)); }
+            | Expr ">" Expr
+                { $$ = new ast::GrtExpr($1, $3, POS(@2)); }
+            | Expr "&&" Expr
+                { $$ = new ast::AndExpr($1, $3, POS(@2)); }
+            | Expr "||" Expr
+                { $$ = new ast::OrExpr ($1, $3, POS(@2)); }
             | Expr "?" Expr ":" Expr
                 { $$ = new ast::IfExpr($1, $3, $5, POS(@2)); }
             | "-" Expr %prec NEG

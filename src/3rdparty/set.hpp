@@ -173,7 +173,7 @@ namespace mind {
 	  
       bool contains(const _T e) const {
         const _T* p = std::lower_bound(begin(), end(), e);
-        return (p!=end() && (*p == e);
+        return (p!=end() && (*p == e));
       }
 
 	  void clear(void) {
