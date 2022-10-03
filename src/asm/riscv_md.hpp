@@ -85,7 +85,11 @@ struct RiscvInstr : public Instr {
         COMMENT,
         // instructions/pseudo instructions
         ADD,
+        // unary operator
         NEG,
+        LNOT,
+        BNOT,
+        // branch
         J,
         BEQZ,
         RET,
@@ -99,7 +103,7 @@ struct RiscvInstr : public Instr {
     RiscvReg *r0, *r1, *r2; // 3 register operands
     int i;                  // offset or immediate number
     std::string l;          // target label. for LA, B, BEQZ or JAL
-    const char *comment;    // comment in this line
+    std::string comment;    // comment in this line
 
     RiscvInstr *next; // next instruction
 
@@ -159,7 +163,7 @@ class RiscvDesc : public MachineDesc {
     void emitInstr(RiscvInstr *);
     // appends a new instruction to "_tail"
     void addInstr(RiscvInstr::OpCode, RiscvReg *, RiscvReg *, RiscvReg *, int,
-                  std::string, const char *);
+                  std::string, const std::string&);
 
 
     /*** sketch for peephole optimizer (inside a basic block) ***/

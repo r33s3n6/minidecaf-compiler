@@ -1,0 +1,18 @@
+{
+    "files.associations": {
+        "*.cpp": "cpp",
+        "*.vt": "verilog",
+        "array": "cpp",
+        "*.tcc": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "initializer_list": "cpp",
+        "ranges": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "typeinfo": "cpp",
+        "ostream": "cpp"
+    }
+}

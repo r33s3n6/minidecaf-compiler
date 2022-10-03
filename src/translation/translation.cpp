@@ -67,13 +67,14 @@ void Translation::visit(ast::FuncDefn *f) {
         v->attachTemp(tr->getNewTempI4());
     }
 
+    // Note: unused?
     fun->offset = fun->getOrder() * POINTER_SIZE;
 
     RESET_OFFSET();
 
     tr->startFunc(fun);
 
-    // You may process params here, i.e use reg or stack to pass parameters
+    // TODO: You may process params here, i.e use reg or stack to pass parameters
 
 
     // translates statement by statement
@@ -177,6 +178,22 @@ void Translation::visit(ast::NegExpr *e) {
     e->e->accept(this);
 
     e->ATTR(val) = tr->genNeg(e->e->ATTR(val));
+}
+
+/* Translating an ast::NotExpr node.
+ */
+void Translation::visit(ast::NotExpr *e) {
+    e->e->accept(this);
+
+    e->ATTR(val) = tr->genLNot(e->e->ATTR(val));
+}
+
+/* Translating an ast::NegExpr node.
+ */
+void Translation::visit(ast::BitNotExpr *e) {
+    e->e->accept(this);
+
+    e->ATTR(val) = tr->genBNot(e->e->ATTR(val));
 }
 
 /* Translating an ast::LvalueExpr node.

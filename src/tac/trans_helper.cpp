@@ -385,7 +385,7 @@ Temp TransHelper::genLNot(Temp src) {
  * PARAMETERS:
  *   src  - operand
  * RETURNS:
- *   the temporary containing the result of (!src)
+ *   the temporary containing the result of (~src)
  */
 Temp TransHelper::genBNot(Temp src) {
     Temp c = getNewTempI4();

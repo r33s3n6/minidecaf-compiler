@@ -29,7 +29,7 @@
 
 using namespace mind;
 
-void yyerror (char const *);
+// void yyerror (char const *);
 void setParseTree(ast::Program* tree);
 
   /* This macro is provided for your convenience. */
@@ -49,63 +49,65 @@ void scan_end();
 
 %define api.token.prefix {TOK_}
 %token
-   END  0  "end of file"
-   BOOL "bool"
-   INT  "int"
-   RETURN "return"
-   IF "if"
-   ELSE  "else"
-   DO "do"
-   WHILE "while"
-   FOR "for"
-   BREAK "break"
-   EQU "=="
-   NEQ "!="
-   AND "&&" 
-   OR "||"
-   LEQ "<="
-   GEQ ">="
-   PLUS "+"
-   MINUS "-"
-   TIMES "*"
-   SLASH "/"
-   MOD "%"
-   LT "<"
-   GT ">"
-   COLON ":"
+   END  0    "end of file"
+   BOOL      "bool"
+   INT       "int"
+   RETURN    "return"
+   IF        "if"
+   ELSE      "else"
+   DO        "do"
+   WHILE     "while"
+   FOR       "for"
+   BREAK     "break"
+   EQU       "=="
+   NEQ       "!="
+   AND       "&&" 
+   OR        "||"
+   LEQ       "<="
+   GEQ       ">="
+   PLUS      "+"
+   MINUS     "-"
+   TIMES     "*"
+   SLASH     "/"
+   MOD       "%"
+   LT        "<"
+   GT        ">"
+   COLON     ":"
    SEMICOLON ";"
-   LNOT "!"
-   BNOT "~"
-   COMMA ","
-   DOT "."
-   ASSIGN "="
-   QUESTION "?"
-   LPAREN "("
-   RPAREN ")"
-   LBRACK "["
-   RBRACK "]"
-   LBRACE "{"
-   RBRACE "}"
+   LNOT      "!"
+   BNOT      "~"
+   COMMA     ","
+   DOT       "."
+   ASSIGN    "="
+   QUESTION  "?"
+   LPAREN    "("
+   RPAREN    ")"
+   LBRACK    "["
+   RBRACK    "]"
+   LBRACE    "{"
+   RBRACE    "}"
 ;
 %token <std::string> IDENTIFIER "identifier"
-%token<int> ICONST "iconst"
-%nterm<mind::ast::StmtList*> StmtList
-%nterm<mind::ast::VarList* > FormalList 
-%nterm<mind::ast::Program* > Program FoDList
-%nterm<mind::ast::FuncDefn* > FuncDefn
-%nterm<mind::ast::Type*> Type
-%nterm<mind::ast::Statement*> Stmt  ReturnStmt ExprStmt IfStmt  CompStmt WhileStmt 
-%nterm<mind::ast::Expr*> Expr
+%token <int>         ICONST     "iconst"
+
+%nterm <mind::ast::StmtList*>  StmtList
+%nterm <mind::ast::VarList*>   FormalList 
+%nterm <mind::ast::Program*>   Program FoDList
+%nterm <mind::ast::FuncDefn*>  FuncDefn
+%nterm <mind::ast::Type*>      Type
+%nterm <mind::ast::Statement*> Stmt ReturnStmt ExprStmt IfStmt CompStmt WhileStmt 
+%nterm <mind::ast::Expr*>      Expr
+
 /*   SUBSECTION 2.2: associativeness & precedences */
-%nonassoc QUESTION
-%left     OR
-%left     AND
-%left EQU NEQ
-%left LEQ GEQ LT GT
-%left     PLUS MINUS
-%left     TIMES SLASH MOD
-%nonassoc LNOT NEG BNOT
-%nonassoc LBRACK DOT
+%nonassoc "?"
+%left     "||"
+%left     "&&"
+%left     "==" "!="
+%left     "<=" ">=" "<" ">"
+%left     "+" "-"
+%left     "*" "/" "%"
+%nonassoc "~" NEG "!"
+%nonassoc "[" "."
 
 %{
   /* we have to include scanner.hpp here... */
@@ -119,72 +121,82 @@ void scan_end();
 %%
 Program     : FoDList
                 { /* we don't write $$ = XXX here. */
-				  setParseTree($1); }
-            ;
-FoDList :   
-            FuncDefn 
-                {$$ = new ast::Program($1,POS(@1)); } |
-            FoDList FuncDefn{
-                 {$1->func_and_globals->append($2);
-                  $$ = $1; }
+				          setParseTree($1);
                 }
-
-FuncDefn : Type IDENTIFIER LPAREN FormalList RPAREN LBRACE StmtList RBRACE {
-              $$ = new ast::FuncDefn($2,$1,$4,$7,POS(@1));
-          } |
-          Type IDENTIFIER LPAREN FormalList RPAREN SEMICOLON{
-              $$ = new ast::FuncDefn($2,$1,$4,new ast::EmptyStmt(POS(@6)),POS(@1));
-          }
-FormalList :  /* EMPTY */
-            {$$ = new ast::VarList();} 
+            ;
+FoDList     : FuncDefn 
+                { $$ = new ast::Program($1, POS(@1)); } 
+            | FoDList FuncDefn
+                {
+                  $1->func_and_globals->append($2);
+                  $$ = $1;
+                }
+            ;
+FuncDefn    : Type IDENTIFIER "(" FormalList ")" "{" StmtList "}" 
+                {
+                  $$ = new ast::FuncDefn($2, $1, $4, $7, POS(@1));
+                }
+            | Type IDENTIFIER "(" FormalList ")" ";"
+                {
+                  $$ = new ast::FuncDefn($2, $1, $4, new ast::EmptyStmt(POS(@6)), POS(@1));
+                }
+            ;
+FormalList  : /* EMPTY */
+                { $$ = new ast::VarList(); } 
 
 Type        : INT
                 { $$ = new ast::IntType(POS(@1)); }
 StmtList    : /* empty */
                 { $$ = new ast::StmtList(); }
             | StmtList Stmt
-                { $1->append($2);
-                  $$ = $1; }
+                { 
+                  $1->append($2);
+                  $$ = $1; 
+                }
             ;
 
-Stmt        : ReturnStmt {$$ = $1;}|
-              ExprStmt   {$$ = $1;}|
-              IfStmt     {$$ = $1;}|
-              WhileStmt  {$$ = $1;}|
-              CompStmt   {$$ = $1;}|
-              BREAK SEMICOLON  
-                {$$ = new ast::BreakStmt(POS(@1));} |
-              SEMICOLON
+Stmt        :  ReturnStmt {$$ = $1;}
+            |  ExprStmt   {$$ = $1;}
+            |  IfStmt     {$$ = $1;}
+            |  WhileStmt  {$$ = $1;}
+            |  CompStmt   {$$ = $1;}
+            |  "break" ";"  
+                {$$ = new ast::BreakStmt(POS(@1));}
+            |  ";"
                 {$$ = new ast::EmptyStmt(POS(@1));}
             ;
-CompStmt    : LBRACE StmtList RBRACE
-                {$$ = new ast::CompStmt($2,POS(@1));}
+CompStmt    : "{" StmtList "}"
+                {$$ = new ast::CompStmt($2, POS(@1));}
             ;
-WhileStmt   : WHILE LPAREN Expr RPAREN Stmt
+WhileStmt   : "while" "(" Expr ")" Stmt
                 { $$ = new ast::WhileStmt($3, $5, POS(@1)); }
             ;
-IfStmt      : IF LPAREN Expr RPAREN Stmt
+IfStmt      : "if" "(" Expr ")" Stmt
                 { $$ = new ast::IfStmt($3, $5, new ast::EmptyStmt(POS(@5)), POS(@1)); }
-            | IF LPAREN Expr RPAREN Stmt ELSE Stmt
+            | "if" "(" Expr ")" Stmt "else" Stmt
                 { $$ = new ast::IfStmt($3, $5, $7, POS(@1)); }
             ;
 
-ReturnStmt  : RETURN Expr SEMICOLON
+ReturnStmt  : "return" Expr ";"
                 { $$ = new ast::ReturnStmt($2, POS(@1)); }
             ;
-ExprStmt    : Expr SEMICOLON
+ExprStmt    : Expr ";"
                 { $$ = new ast::ExprStmt($1, POS(@1)); } 
             ;         
 Expr        : ICONST
                 { $$ = new ast::IntConst($1, POS(@1)); }            
-            | LPAREN Expr RPAREN
+            | "(" Expr ")"
                 { $$ = $2; }
-            | Expr PLUS Expr
+            | Expr "+" Expr
                 { $$ = new ast::AddExpr($1, $3, POS(@2)); }
-            | Expr QUESTION Expr COLON Expr
-                { $$ = new ast::IfExpr($1,$3,$5,POS(@2)); }
-            | MINUS Expr  %prec NEG
+            | Expr "?" Expr ":" Expr
+                { $$ = new ast::IfExpr($1, $3, $5, POS(@2)); }
+            | "-" Expr %prec NEG
                 { $$ = new ast::NegExpr($2, POS(@1)); }
+            | "~" Expr
+                { $$ = new ast::BitNotExpr($2, POS(@1)); }
+            | "!" Expr
+                { $$ = new ast::NotExpr($2, POS(@1)); }
             ;
 
 %%
@@ -194,8 +206,8 @@ Expr        : ICONST
 #include <cstdio>
 
 static ast::Program* ptree = NULL;
-extern int myline, mycol;   // defined in scanner.l
-
+// extern int myline, mycol;   // defined in scanner.l
+/*
 // bison will generate code to invoke me
 void
 yyerror (char const *msg) {
@@ -203,7 +215,7 @@ yyerror (char const *msg) {
   scan_end();
   std::exit(1);
 }
-
+*/
 // call me when the Program symbol is reduced
 void
 setParseTree(ast::Program* tree) {
@@ -222,15 +234,10 @@ setParseTree(ast::Program* tree) {
 ast::Program*
 mind::MindCompiler::parseFile(const char* filename) {  
   scan_begin(filename);
-  /* if (NULL == filename)
-	yyin = stdin;
-  else
-	yyin = std::fopen(filename, "r"); */
+
   yy::parser parse;
   parse();
   scan_end();
-  /* if (yyin != stdin)
-	std::fclose(yyin); */
   
   return ptree;
 }

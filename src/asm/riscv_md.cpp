@@ -168,7 +168,7 @@ RiscvInstr *RiscvDesc::prepareSingleChain(BasicBlock *b, FlowGraph *g) {
     case BasicBlock::BY_JUMP:
         spillDirtyRegs(b->LiveOut);
         addInstr(RiscvInstr::J, NULL, NULL, NULL, 0,
-                 std::string(g->getBlock(b->next[0])->entry_label), NULL);
+                 std::string(g->getBlock(b->next[0])->entry_label), {});
         // "B" for "branch"
         break;
 
@@ -177,23 +177,23 @@ RiscvInstr *RiscvDesc::prepareSingleChain(BasicBlock *b, FlowGraph *g) {
         spillDirtyRegs(b->LiveOut);
         // uses "branch if equal to zero" instruction
         addInstr(RiscvInstr::BEQZ, _reg[r0], NULL, NULL, 0,
-                 std::string(g->getBlock(b->next[0])->entry_label), NULL);
+                 std::string(g->getBlock(b->next[0])->entry_label), {});
         addInstr(RiscvInstr::J, NULL, NULL, NULL, 0,
-                 std::string(g->getBlock(b->next[1])->entry_label), NULL);
+                 std::string(g->getBlock(b->next[1])->entry_label), {});
         break;
 
     case BasicBlock::BY_RETURN:
         r0 = getRegForRead(b->var, 0, b->LiveOut);
         spillDirtyRegs(b->LiveOut); // just to deattach all temporary variables
         addInstr(RiscvInstr::MOVE, _reg[RiscvReg::A0], _reg[r0], NULL, 0,
-                 EMPTY_STR, NULL);
+                 EMPTY_STR, {});
         addInstr(RiscvInstr::MOVE, _reg[RiscvReg::SP], _reg[RiscvReg::FP], NULL,
-                 0, EMPTY_STR, NULL);
+                 0, EMPTY_STR, {});
         addInstr(RiscvInstr::LW, _reg[RiscvReg::RA], _reg[RiscvReg::FP], NULL,
-                 -4, EMPTY_STR, NULL);
+                 -4, EMPTY_STR, {});
         addInstr(RiscvInstr::LW, _reg[RiscvReg::FP], _reg[RiscvReg::FP], NULL,
-                 -8, EMPTY_STR, NULL);
-        addInstr(RiscvInstr::RET, NULL, NULL, NULL, 0, EMPTY_STR, NULL);
+                 -8, EMPTY_STR, {});
+        addInstr(RiscvInstr::RET, NULL, NULL, NULL, 0, EMPTY_STR, {});
         break;
 
     default:
@@ -213,7 +213,7 @@ RiscvInstr *RiscvDesc::prepareSingleChain(BasicBlock *b, FlowGraph *g) {
 void RiscvDesc::emitTac(Tac *t) {
     std::ostringstream oss;
     t->dump(oss);
-    addInstr(RiscvInstr::COMMENT, NULL, NULL, NULL, 0, EMPTY_STR, oss.str().c_str() + 4);
+    addInstr(RiscvInstr::COMMENT, NULL, NULL, NULL, 0, EMPTY_STR, oss.str());
 
     switch (t->op_code) {
     case Tac::LOAD_IMM4:
@@ -222,6 +222,12 @@ void RiscvDesc::emitTac(Tac *t) {
 
     case Tac::NEG:
         emitUnaryTac(RiscvInstr::NEG, t);
+        break;
+    case Tac::LNOT:
+        emitUnaryTac(RiscvInstr::LNOT, t);
+        break;
+    case Tac::BNOT:
+        emitUnaryTac(RiscvInstr::BNOT, t);
         break;
     
     case Tac::ADD:
@@ -246,7 +252,7 @@ void RiscvDesc::emitLoadImm4Tac(Tac *t) {
     // uses "load immediate number" instruction
     int r0 = getRegForWrite(t->op0.var, 0, 0, t->LiveOut);
     addInstr(RiscvInstr::LI, _reg[r0], NULL, NULL, t->op1.ival, EMPTY_STR,
-             NULL);
+             {});
 }
 
 /* Translates a Unary TAC into Riscv instructions.
@@ -262,7 +268,7 @@ void RiscvDesc::emitUnaryTac(RiscvInstr::OpCode op, Tac *t) {
     int r1 = getRegForRead(t->op1.var, 0, t->LiveOut);
     int r0 = getRegForWrite(t->op0.var, r1, 0, t->LiveOut);
 
-    addInstr(op, _reg[r0], _reg[r1], NULL, 0, EMPTY_STR, NULL);
+    addInstr(op, _reg[r0], _reg[r1], NULL, 0, EMPTY_STR, {});
 }
 
 /* Translates a Binary TAC into Riscv instructions.
@@ -282,7 +288,7 @@ void RiscvDesc::emitBinaryTac(RiscvInstr::OpCode op, Tac *t) {
     int r2 = getRegForRead(t->op2.var, r1, liveness);
     int r0 = getRegForWrite(t->op0.var, r1, r2, liveness);
 
-    addInstr(op, _reg[r0], _reg[r1], _reg[r2], 0, EMPTY_STR, NULL);
+    addInstr(op, _reg[r0], _reg[r1], _reg[r2], 0, EMPTY_STR, {});
 }
 
 /* Outputs a single instruction line.
@@ -330,11 +336,11 @@ void RiscvDesc::passParamReg(Tac *t, int cnt) {
             << (v->offset < 0 ? "" : "+") << v->offset << ") into "
             << _reg[RiscvReg::A0 + cnt]->name;
         addInstr(RiscvInstr::LW, _reg[RiscvReg::A0 + cnt], base, NULL, v->offset, EMPTY_STR,
-                    oss.str().c_str());
+                    oss.str());
     } else {
         oss << "copy " << _reg[i]->name << " to " << _reg[RiscvReg::A0 + cnt]->name;
         addInstr(RiscvInstr::MOVE, _reg[RiscvReg::A0 + cnt], _reg[i], NULL, 0,
-                    EMPTY_STR, oss.str().c_str());
+                    EMPTY_STR, oss.str());
     }
 }
 
@@ -447,7 +453,7 @@ void RiscvDesc::emitInstr(RiscvInstr *i) {
 
     switch (i->op_code) {
     case RiscvInstr::COMMENT:
-        emit(EMPTY_STR, NULL, i->comment);
+        emit(EMPTY_STR, NULL, i->comment.c_str());
         return;
 
     case RiscvInstr::LI:
@@ -456,6 +462,14 @@ void RiscvDesc::emitInstr(RiscvInstr *i) {
 
     case RiscvInstr::NEG:
         oss << "neg" << i->r0->name << ", " << i->r1->name;
+        break;
+
+    case RiscvInstr::LNOT:
+        oss << "seqz" << i->r0->name << ", " << i->r1->name;
+        break;
+
+    case RiscvInstr::BNOT:
+        oss << "not" << i->r0->name << ", " << i->r1->name;
         break;
 
     case RiscvInstr::MOVE:
@@ -490,7 +504,7 @@ void RiscvDesc::emitInstr(RiscvInstr *i) {
         mind_assert(false); // other instructions not supported
     }
 
-    emit(EMPTY_STR, oss.str().c_str(), i->comment);
+    emit(EMPTY_STR, oss.str().c_str(), (i->comment.size()) ? i->comment.c_str() : NULL);
 }
 
 /* Outputs a "trace" (see also: RiscvDesc::emitFuncty).
@@ -542,7 +556,7 @@ void RiscvDesc::emitTrace(BasicBlock *b, FlowGraph *g) {
  *   cmt     - comment of this line
  */
 void RiscvDesc::addInstr(RiscvInstr::OpCode op_code, RiscvReg *r0, RiscvReg *r1,
-                         RiscvReg *r2, int i, std::string l, const char *cmt) {
+                         RiscvReg *r2, int i, std::string l, const std::string& cmt) {
     mind_assert(NULL != _tail);
 
     // we should eliminate all the comments when doing optimization
@@ -606,12 +620,12 @@ int RiscvDesc::getRegForRead(Temp v, int avoid1, LiveSet *live) {
                 << (v->offset < 0 ? "" : "+") << v->offset << ") into "
                 << _reg[i]->name;
             addInstr(RiscvInstr::LW, _reg[i], base, NULL, v->offset, EMPTY_STR,
-                     oss.str().c_str());
+                     oss.str());
 
         } else {
             oss << "initialize " << v << " with 0";
             addInstr(RiscvInstr::MOVE, _reg[i], _reg[RiscvReg::ZERO], NULL, 0,
-                     EMPTY_STR, oss.str().c_str());
+                     EMPTY_STR, oss.str());
         }
         _reg[i]->dirty = false;
     }
@@ -674,7 +688,7 @@ void RiscvDesc::spillReg(int i, LiveSet *live) {
         oss << "spill " << v << " from " << _reg[i]->name << " to ("
             << base->name << (v->offset < 0 ? "" : "+") << v->offset << ")";
         addInstr(RiscvInstr::SW, _reg[i], base, NULL, v->offset, EMPTY_STR,
-                 oss.str().c_str());
+                 oss.str());
     }
 
     _reg[i]->var = NULL;
