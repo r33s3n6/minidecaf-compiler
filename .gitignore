@@ -54,3 +54,6 @@ debug.sh
 *.my
 *.actual
 mind.dSYM
+
+#
+tmp/
