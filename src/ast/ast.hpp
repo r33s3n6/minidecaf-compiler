@@ -149,6 +149,7 @@ class Lvalue : public ASTNode {
     } ATTR(lv_kind);
 
     type::Type *ATTR(type); // for semantic analysis
+    symb::Variable *ATTR(sym); // for tac generation
 };
 
 /* Node representing a program.
@@ -391,7 +392,7 @@ class VarRef : public Lvalue {
     Expr *owner; // only to pass compilation, not used
     std::string var;
 
-    symb::Variable *ATTR(sym); // for tac generation
+
 };
 
 class PointerRef : public Lvalue {
@@ -404,7 +405,6 @@ class PointerRef : public Lvalue {
   public:
     Expr *pointer;
 
-    symb::Variable *ATTR(sym); // for tac generation
 };
 
 /* Node representing an expression of lvalue.
@@ -658,50 +658,51 @@ class IfExpr : public Expr {
     Expr *false_brch;
 };
 
+class UnaryExprBase : public Expr {
+    virtual void accept(Visitor *)=0;
+    virtual void dumpTo(std::ostream &)=0;
+  public:
+    Expr *e;
+};
+
 /* Node representing a negating operation.
  *
  * SERIALIZED FORM:
  *   (neg EXPR)
  */
-class NegExpr : public Expr {
+class NegExpr : public UnaryExprBase {
   public:
     NegExpr(Expr *e, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
 
-  public:
-    Expr *e;
 };
 /* Node representing a logical-not operation.
  *
  * SERIALIZED FORM:
  *   (not EXPR)
  */
-class NotExpr : public Expr {
+class NotExpr : public UnaryExprBase {
   public:
     NotExpr(Expr *e, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
 
-  public:
-    Expr *e;
 };
 /* Node representing a bitwise-not operation.
  *
  * SERIALIZED FORM:
  *   (bitnot EXPR)
  */
-class BitNotExpr : public Expr {
+class BitNotExpr : public UnaryExprBase {
   public:
     BitNotExpr(Expr *e, Location *l);
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
 
-  public:
-    Expr *e;
 };
 extern bool print_decorated_ast;
 } // namespace ast

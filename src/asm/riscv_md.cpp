@@ -219,7 +219,9 @@ void RiscvDesc::emitTac(Tac *t) {
     case Tac::LOAD_IMM4:
         emitLoadImm4Tac(t);
         break;
-
+    case Tac::ASSIGN:
+        emitAssignTac(t);
+        break;
     case Tac::NEG:
         emitUnaryTac(RiscvInstr::NEG, t);
         break;
@@ -291,6 +293,25 @@ void RiscvDesc::emitLoadImm4Tac(Tac *t) {
     int r0 = getRegForWrite(t->op0.var, 0, 0, t->LiveOut);
     addInstr(RiscvInstr::LI, _reg[r0], NULL, NULL, t->op1.ival, EMPTY_STR,
              {});
+}
+
+
+/* Translates an Assign TAC into Riscv instructions.
+ *
+ * PARAMETERS:
+ *   t     - the Assign TAC
+ */
+void RiscvDesc::emitAssignTac(Tac *t) {
+    // eliminates useless assignments
+    if (!t->LiveOut->contains(t->op0.var))
+        return;
+
+    // TODO: global variables
+    int r1 = getRegForRead(t->op1.var, 0, t->LiveOut);
+    int r0 = getRegForWrite(t->op0.var, r1, 0, t->LiveOut);
+    
+    addInstr(RiscvInstr::MOVE, _reg[r0], _reg[r1], NULL, 0, EMPTY_STR, {});
+
 }
 
 /* Translates a Unary TAC into Riscv instructions.
@@ -726,16 +747,21 @@ int RiscvDesc::getRegForRead(Temp v, int avoid1, LiveSet *live) {
 
     if (i < 0) {
         // we will load the content into some register
+
+        // find empty register
         i = lookupReg(NULL);
 
         if (i < 0) {
+            // no empty register, we need to spill some register
             i = selectRegToSpill(avoid1, RiscvReg::ZERO, live);
             spillReg(i, live);
         }
 
         _reg[i]->var = v;
 
+       
         if (v->is_offset_fixed) {
+             // has been allocated on the stack, load it
             RiscvReg *base = _reg[RiscvReg::FP];
             oss << "load " << v << " from (" << base->name
                 << (v->offset < 0 ? "" : "+") << v->offset << ") into "
@@ -803,6 +829,7 @@ void RiscvDesc::spillReg(int i, LiveSet *live) {
         RiscvReg *base = _reg[RiscvReg::FP];
 
         if (!v->is_offset_fixed) {
+            // allocate space for this variable on the stack
             _frame->getSlotToWrite(v, live);
         }
 

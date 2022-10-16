@@ -97,8 +97,9 @@ int RiscvStackFrameManager::getSlotToWrite(Temp v, Set<Temp> *liveness) {
     int i = findSlotOf(v);
 
     if (i >= 0) {
-        v->offset = offsetOf(i);
-        v->is_offset_fixed = true;
+        // Note: modified: seems useless
+        // v->offset = offsetOf(i);
+        // v->is_offset_fixed = true;
         return i;
     }
 

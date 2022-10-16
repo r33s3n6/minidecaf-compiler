@@ -95,12 +95,14 @@ void scan_end();
 %nterm <mind::ast::Program*>   Program FoDList
 %nterm <mind::ast::FuncDefn*>  FuncDefn
 %nterm <mind::ast::Type*>      Type
-%nterm <mind::ast::Statement*> Stmt ReturnStmt ExprStmt IfStmt CompStmt WhileStmt 
+%nterm <mind::ast::Statement*> Stmt ReturnStmt ExprStmt IfStmt CompStmt WhileStmt VarDecl
 %nterm <mind::ast::Expr*>      Expr
+%nterm <mind::ast::Lvalue*>    Lvalue
 
 /*   SUBSECTION 2.2: associativeness & precedences */
-%right "then" "else"
+%right    "then" "else"
 %nonassoc "?" ":"
+%right    "="
 %left     "||"
 %left     "&&"
 %left     "==" "!="
@@ -156,11 +158,12 @@ StmtList    : /* empty */
                 }
             ;
 
-Stmt        :  ReturnStmt {$$ = $1;}
-            |  ExprStmt   {$$ = $1;}
-            |  IfStmt     {$$ = $1;}
-            |  WhileStmt  {$$ = $1;}
-            |  CompStmt   {$$ = $1;}
+Stmt        :  ReturnStmt  {$$ = $1;}
+            |  ExprStmt    {$$ = $1;}
+            |  IfStmt      {$$ = $1;}
+            |  WhileStmt   {$$ = $1;}
+            |  CompStmt    {$$ = $1;}
+            |  VarDecl {$$ = $1;}
             |  "break" ";"  
                 {$$ = new ast::BreakStmt(POS(@1));}
             |  ";"
@@ -183,9 +186,16 @@ ReturnStmt  : "return" Expr ";"
             ;
 ExprStmt    : Expr ";"
                 { $$ = new ast::ExprStmt($1, POS(@1)); } 
-            ;         
+            ;  
+VarDecl     : Type IDENTIFIER ";"
+                { $$ = new ast::VarDecl($2, $1, POS(@1)); }
+            | Type IDENTIFIER "=" Expr ";"
+                { $$ = new ast::VarDecl($2, $1, $4, POS(@1)); }
+            ;
 Expr        : ICONST
-                { $$ = new ast::IntConst($1, POS(@1)); }            
+                { $$ = new ast::IntConst($1, POS(@1)); }    
+            | Lvalue
+                { $$ = new ast::LvalueExpr($1, POS(@1)); }        
             | "(" Expr ")"
                 { $$ = $2; }
             | Expr "+" Expr
@@ -222,6 +232,11 @@ Expr        : ICONST
                 { $$ = new ast::BitNotExpr($2, POS(@1)); }
             | "!" Expr
                 { $$ = new ast::NotExpr($2, POS(@1)); }
+            | Lvalue "=" Expr
+                { $$ = new ast::AssignExpr($1, $3, POS(@2)); }
+            ;
+Lvalue      : IDENTIFIER
+                { $$ = new ast::VarRef($1, POS(@1)); }
             ;
 
 %%

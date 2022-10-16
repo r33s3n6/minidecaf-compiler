@@ -4,8 +4,6 @@
  *  In the second pass, we will check:
  *    1. whether all the expressions are well-typed; (and sets ATTR(type))
  *    2. whether all the statements are well-formed;
- *    3. whether all the referenced symbols are well-defined. (and sets
- * ATTR(sym))
  *
  *  Keltin Leung 
  */
@@ -29,17 +27,18 @@ using namespace mind::err;
 /* Pass 2 of the semantic analysis.
  */
 class SemPass2 : public ast::Visitor {
-    // Visiting expressions
-    virtual void visit(ast::AssignExpr *);
-    
+    // constants
     virtual void visit(ast::IntConst *);
-    
-    virtual void visit(ast::LvalueExpr *);
+    // lvalues
     virtual void visit(ast::VarRef *);
+
+    // Visiting expressions
     // unary operator
-    virtual void visit(ast::NegExpr *);
-    virtual void visit(ast::NotExpr *);
-    virtual void visit(ast::BitNotExpr *);
+    void visitUnaryExpr(ast::UnaryExprBase* e);
+    virtual void visit(ast::NegExpr    * e) { visitUnaryExpr(e); }
+    virtual void visit(ast::NotExpr    * e) { visitUnaryExpr(e); }
+    virtual void visit(ast::BitNotExpr * e) { visitUnaryExpr(e); }
+    
     // binary operator
     void visitBinaryExpr(ast::BinaryExprBase* e);
     virtual void visit(ast::AddExpr * e) { visitBinaryExpr(e); }
@@ -54,7 +53,11 @@ class SemPass2 : public ast::Visitor {
     virtual void visit(ast::LesExpr * e) { visitBinaryExpr(e); }
     virtual void visit(ast::GrtExpr * e) { visitBinaryExpr(e); }
     virtual void visit(ast::AndExpr * e) { visitBinaryExpr(e); }
-    virtual void visit(ast::OrExpr * e)  { visitBinaryExpr(e); }
+    virtual void visit(ast::OrExpr  * e) { visitBinaryExpr(e); }
+
+    // special expr
+    virtual void visit(ast::LvalueExpr * e);
+    virtual void visit(ast::AssignExpr * e);
 
 
     // Visiting statements
@@ -105,6 +108,19 @@ static void expect(ast::Expr *e, Type *t) {
  */
 void SemPass2::visit(ast::IntConst *e) { e->ATTR(type) = BaseType::Int; }
 
+
+/* Visits an all node inherited from ast::UnaryExprBase
+ *
+ * PARAMETERS:
+ *   e     - the ast::UnaryExprBase node
+ */
+void SemPass2::visitUnaryExpr(ast::UnaryExprBase *e) {
+    e->e->accept(this);
+    expect(e->e, BaseType::Int);
+
+    e->ATTR(type) = BaseType::Int;
+}
+
 /* Visits an all node inherited from ast::BinaryExprBase
  *
  * PARAMETERS:
@@ -120,42 +136,8 @@ void SemPass2::visitBinaryExpr(ast::BinaryExprBase * e) {
     e->ATTR(type) = BaseType::Int;
 }
 
-/* Visits an ast::NegExpr node.
- *
- * PARAMETERS:
- *   e     - the ast::NegExpr node
- */
-void SemPass2::visit(ast::NegExpr *e) {
-    e->e->accept(this);
-    expect(e->e, BaseType::Int);
-
-    e->ATTR(type) = BaseType::Int;
-}
-
-/* Visits an ast::NotExpr node.
- *
- * PARAMETERS:
- *   e     - the ast::NotExpr node
- */
-void SemPass2::visit(ast::NotExpr *e) {
-    e->e->accept(this);
-    expect(e->e, BaseType::Int);
-
-    e->ATTR(type) = BaseType::Int;
-}
 
 
-/* Visits an ast::BitNotExpr node.
- *
- * PARAMETERS:
- *   e     - the ast::BitNotExpr node
- */
-void SemPass2::visit(ast::BitNotExpr *e) {
-    e->e->accept(this);
-    expect(e->e, BaseType::Int);
-
-    e->ATTR(type) = BaseType::Int;
-}
 
 /* Visits an ast::LvalueExpr node.
  *
@@ -174,31 +156,17 @@ void SemPass2::visit(ast::LvalueExpr *e) {
  */
 void SemPass2::visit(ast::VarRef *ref) {
     // CASE I: owner is NULL ==> referencing a local var or a member var?
-    Symbol *v = scopes->lookup(ref->var, ref->getLocation());
-    if (NULL == v) {
-        issue(ref->getLocation(), new SymbolNotFoundError(ref->var));
-        goto issue_error_type;
 
-    } else if (!v->isVariable()) {
-        issue(ref->getLocation(), new NotVariableError(v));
-        goto issue_error_type;
+    Variable *v = ref->ATTR(sym);
 
-    } else {
-        ref->ATTR(type) = v->getType();
-        ref->ATTR(sym) = (Variable *)v;
+    ref->ATTR(type) = v->getType();
 
-        if (((Variable *)v)->isLocalVar()) {
-            ref->ATTR(lv_kind) = ast::Lvalue::SIMPLE_VAR;
-        }
+    if (((Variable *)v)->isLocalVar()) {
+        ref->ATTR(lv_kind) = ast::Lvalue::SIMPLE_VAR;
     }
 
     return;
 
-    // sometimes "GOTO" will make things simpler. this is one of such cases:
-issue_error_type:
-    ref->ATTR(type) = BaseType::Error;
-    ref->ATTR(sym) = NULL;
-    return;
 }
 
 /* Visits an ast::VarDecl node.

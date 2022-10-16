@@ -23,20 +23,26 @@ class Translation : public ast::Visitor {
 
     virtual void visit(ast::Program *);
     virtual void visit(ast::FuncDefn *);
-    virtual void visit(ast::AssignExpr *);
+
+
+    // statements
     virtual void visit(ast::CompStmt *);
     virtual void visit(ast::ExprStmt *);
     virtual void visit(ast::IfStmt *);
     virtual void visit(ast::ReturnStmt *);
 
-    virtual void visit(ast::IntConst *);
-
-    virtual void visit(ast::LvalueExpr *);
-    virtual void visit(ast::VarRef *);
     virtual void visit(ast::VarDecl *);
     virtual void visit(ast::WhileStmt *);
     virtual void visit(ast::BreakStmt *);
 
+    // constants
+    virtual void visit(ast::IntConst *);
+
+        // lvalues
+    virtual void visit(ast::VarRef *);
+
+
+    // expressions
     // unary operator
     virtual void visit(ast::NegExpr *);
     virtual void visit(ast::NotExpr *);
@@ -56,6 +62,11 @@ class Translation : public ast::Visitor {
     virtual void visit(ast::GrtExpr *); 
     virtual void visit(ast::AndExpr *); 
     virtual void visit(ast::OrExpr  *); 
+
+    // special expr
+    virtual void visit(ast::LvalueExpr * e);
+    virtual void visit(ast::AssignExpr * e);
+
 
     virtual ~Translation() {}
 

@@ -6,8 +6,9 @@
  *    2. create and manage scope::Scope instances;
  *    3. create symb::Symbol instances;
  *    4. manage the symbol tables.
- *  After this pass, the ATTR(sym) or ATTR(type) attributs of the visited nodes
- *  should have been set.
+ *  After this pass, ATTR(sym) is set for program, functions,
+ *  variables, and variable references. ATTR(type) is set for
+ *  related type of functions and variables.
  *
  *  Keltin Leung 
  */
@@ -34,10 +35,44 @@ class SemPass1 : public ast::Visitor {
     // visiting declarations
     virtual void visit(ast::FuncDefn *);
     virtual void visit(ast::Program *);
+
+    // visiting statements
     virtual void visit(ast::IfStmt *);
     virtual void visit(ast::WhileStmt *);
     virtual void visit(ast::CompStmt *);
     virtual void visit(ast::VarDecl *);
+    virtual void visit(ast::ExprStmt *);
+    virtual void visit(ast::ReturnStmt *);
+
+
+    // unary operator
+    void visitUnaryExpr(ast::UnaryExprBase* e);
+    virtual void visit(ast::NegExpr    * e) { visitUnaryExpr(e); }
+    virtual void visit(ast::NotExpr    * e) { visitUnaryExpr(e); }
+    virtual void visit(ast::BitNotExpr * e) { visitUnaryExpr(e); }
+    
+    // binary operator
+    void visitBinaryExpr(ast::BinaryExprBase* e);
+    virtual void visit(ast::AddExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::SubExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::MulExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::DivExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::ModExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::EquExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::NeqExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::LeqExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::GeqExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::LesExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::GrtExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::AndExpr * e) { visitBinaryExpr(e); }
+    virtual void visit(ast::OrExpr  * e) { visitBinaryExpr(e); }
+
+    // special expr
+    virtual void visit(ast::LvalueExpr * e);
+    virtual void visit(ast::AssignExpr * e);
+
+    // lvalues
+    virtual void visit(ast::VarRef *);
     // visiting types
     virtual void visit(ast::IntType *);
 };
@@ -83,17 +118,20 @@ void SemPass1::visit(ast::FuncDefn *fdef) {
     fdef->ret_type->accept(this);
     Type *t = fdef->ret_type->ATTR(type);
 
-    Function *f = new Function(fdef->name, t, fdef->getLocation());
-    fdef->ATTR(sym) = f;
 
     // checks the Declaration Conflict Error of Case 1 (but don't check Case
     // 2,3). if DeclConflictError occurs, we don't put the symbol into the
     // symbol table
     Symbol *sym = scopes->lookup(fdef->name, fdef->getLocation(), false);
-    if (NULL != sym)
+    if (sym){
         issue(fdef->getLocation(), new DeclConflictError(fdef->name, sym));
-    else
-        scopes->declare(f);
+        return;
+    }
+    
+    Function *f = new Function(fdef->name, t, fdef->getLocation());
+    fdef->ATTR(sym) = f;
+
+    scopes->declare(f);
 
     // opens function scope
     scopes->open(f->getAssociatedScope());
@@ -149,6 +187,68 @@ void SemPass1::visit(ast::CompStmt *c) {
     // closes function scope
     scopes->close();
 }
+
+/* Visiting an ast::ReturnStmt node.
+ */
+void SemPass1::visit(ast::ReturnStmt *r) {
+    r->e->accept(this);
+}
+
+void SemPass1::visit(ast::ExprStmt *s) {
+    s->e->accept(this);
+}
+
+/* Visiting an ast::VarDecl node.
+ *
+ * NOTE:
+ *   tasks include:
+ *   1. build up the Variable symbol
+ *   2. check Declaration Conflict Error
+ *
+ * PARAMETERS:
+ *   vdecl - the ast::VarDecl node to visit
+ */
+
+
+
+
+void SemPass1::visitUnaryExpr(ast::UnaryExprBase* e) {
+    e->e->accept(this);
+}
+
+void SemPass1::visitBinaryExpr(ast::BinaryExprBase* e) {
+    e->e1->accept(this);
+    e->e2->accept(this);
+}
+
+void SemPass1::visit(ast::LvalueExpr * e){
+    e->lvalue->accept(this);
+}
+void SemPass1::visit(ast::AssignExpr * e){
+    e->e->accept(this);
+    e->left->accept(this);
+    
+}
+
+void SemPass1::visit(ast::VarRef * v){
+    // search for the symbol in all scopes
+    Symbol *sym = scopes->lookup(v->var, v->getLocation(), true);
+    if (!sym){
+        issue(v->getLocation(), new SymbolNotFoundError(v->var));
+        return;
+    }
+        
+    if(!sym->isVariable()){
+        issue(v->getLocation(), new NotVariableError(sym));
+        return;
+    }
+
+    v->ATTR(sym) = dynamic_cast<Variable *>(sym);
+
+    mind_assert(v->ATTR(sym));
+
+}
+
 /* Visiting an ast::VarDecl node.
  *
  * NOTE:
@@ -164,13 +264,32 @@ void SemPass1::visit(ast::VarDecl *vdecl) {
     vdecl->type->accept(this);
     t = vdecl->type->ATTR(type);
 
-    // TODO: Add a new symbol to a scope
-    // 1. Create a new `Variable` symbol
-    // 2. Check for conflict in `scopes`, which is a global variable refering to
-    // a scope stack
-    // 3. Declare the symbol in `scopes`
-    // 4. Special processing for global variables
-    // 5. Tag the symbol to `vdecl->ATTR(sym)`
+    // checks the Declaration Conflict Error
+    Symbol *sym = scopes->lookup(vdecl->name, vdecl->getLocation(), false);
+
+    if (sym){
+        issue(vdecl->getLocation(), new DeclConflictError(vdecl->name, sym));
+        return;
+    }
+
+    // Create a new `Variable` symbol
+    Variable *v = new Variable(vdecl->name, t, vdecl->getLocation());
+    scopes->declare(v);
+
+    // TODO: 4. Special processing for global variables
+    if (scopes->top()->getKind() == Scope::GLOBAL){
+        // GlobalScope *gscope = dynamic_cast<GlobalScope *>(scopes->top());
+        // gscope->
+        // TODO:
+    }
+
+    // Tag the symbol to `vdecl->ATTR(sym)`
+    vdecl->ATTR(sym) = v;
+
+    if(vdecl->init){
+        vdecl->init->accept(this);
+    }
+
 }
 
 /* Visiting an ast::IntType node.
