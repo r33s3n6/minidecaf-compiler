@@ -538,8 +538,8 @@ void RiscvDesc::emitProlog(Label entry_label, int frame_size) {
     emit(oss.str(), NULL, "function entry"); // marks the function entry label
     oss.str("");
     // saves old context
-    emit(EMPTY_STR, "sw    ra, -4(sp)", NULL); // saves old frame pointer
-    emit(EMPTY_STR, "sw    fp, -8(sp)", NULL); // saves return address
+    emit(EMPTY_STR, "sw    ra, -4(sp)", NULL); // saves return address
+    emit(EMPTY_STR, "sw    fp, -8(sp)", NULL); // saves old frame pointer
     // establishes new stack frame (new context)
     emit(EMPTY_STR, "mv    fp, sp", NULL);
     oss << "addi  sp, sp, -" << (frame_size + 2 * WORD_SIZE); // 2 WORD's for old $fp and $ra
