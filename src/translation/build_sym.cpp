@@ -67,6 +67,10 @@ class SemPass1 : public ast::Visitor {
     virtual void visit(ast::AndExpr * e) { visitBinaryExpr(e); }
     virtual void visit(ast::OrExpr  * e) { visitBinaryExpr(e); }
 
+    // ternary operator
+    virtual void visit(ast::IfExpr * e);
+
+
     // special expr
     virtual void visit(ast::LvalueExpr * e);
     virtual void visit(ast::AssignExpr * e);
@@ -221,6 +225,12 @@ void SemPass1::visitBinaryExpr(ast::BinaryExprBase* e) {
     e->e2->accept(this);
 }
 
+void SemPass1::visit(ast::IfExpr * e) {
+    e->condition->accept(this);
+    e->true_brch->accept(this);
+    e->false_brch->accept(this);
+}
+
 void SemPass1::visit(ast::LvalueExpr * e){
     e->lvalue->accept(this);
 }
@@ -267,7 +277,8 @@ void SemPass1::visit(ast::VarDecl *vdecl) {
     // checks the Declaration Conflict Error
     Symbol *sym = scopes->lookup(vdecl->name, vdecl->getLocation(), false);
 
-    if (sym){
+    // we accept `main` as a variable name
+    if (vdecl->name != "main" && sym){
         issue(vdecl->getLocation(), new DeclConflictError(vdecl->name, sym));
         return;
     }

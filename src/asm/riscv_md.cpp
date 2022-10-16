@@ -286,8 +286,11 @@ void RiscvDesc::emitTac(Tac *t) {
  */
 void RiscvDesc::emitLoadImm4Tac(Tac *t) {
     // eliminates useless assignments
-    if (!t->LiveOut->contains(t->op0.var))
+    if (!t->LiveOut->contains(t->op0.var)) {
+        addInstr(RiscvInstr::COMMENT, NULL, NULL, NULL, 0, EMPTY_STR, "useless code");
         return;
+    }
+        
 
     // uses "load immediate number" instruction
     int r0 = getRegForWrite(t->op0.var, 0, 0, t->LiveOut);
@@ -303,8 +306,11 @@ void RiscvDesc::emitLoadImm4Tac(Tac *t) {
  */
 void RiscvDesc::emitAssignTac(Tac *t) {
     // eliminates useless assignments
-    if (!t->LiveOut->contains(t->op0.var))
+    if (!t->LiveOut->contains(t->op0.var)) {
+        addInstr(RiscvInstr::COMMENT, NULL, NULL, NULL, 0, EMPTY_STR, "useless code");
         return;
+    }
+        
 
     // TODO: global variables
     int r1 = getRegForRead(t->op1.var, 0, t->LiveOut);
@@ -321,8 +327,11 @@ void RiscvDesc::emitAssignTac(Tac *t) {
  */
 void RiscvDesc::emitUnaryTac(RiscvInstr::OpCode op, Tac *t) {
     // eliminates useless assignments
-    if (!t->LiveOut->contains(t->op0.var))
+    if (!t->LiveOut->contains(t->op0.var)) {
+        addInstr(RiscvInstr::COMMENT, NULL, NULL, NULL, 0, EMPTY_STR, "useless code");
         return;
+    }
+            
 
     int r1 = getRegForRead(t->op1.var, 0, t->LiveOut);
     int r0 = getRegForWrite(t->op0.var, r1, 0, t->LiveOut);
@@ -337,8 +346,11 @@ void RiscvDesc::emitUnaryTac(RiscvInstr::OpCode op, Tac *t) {
  */
 void RiscvDesc::emitBinaryTac(RiscvInstr::OpCode op, Tac *t) {
     // eliminates useless assignments
-    if (!t->LiveOut->contains(t->op0.var))
+    if (!t->LiveOut->contains(t->op0.var)){
+        addInstr(RiscvInstr::COMMENT, NULL, NULL, NULL, 0, EMPTY_STR, "useless code");
         return;
+    }
+        
 
     Set<Temp>* liveness = t->LiveOut->clone();
     liveness->add(t->op1.var);

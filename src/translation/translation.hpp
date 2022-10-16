@@ -63,6 +63,9 @@ class Translation : public ast::Visitor {
     virtual void visit(ast::AndExpr *); 
     virtual void visit(ast::OrExpr  *); 
 
+    // ternary operator
+    virtual void visit(ast::IfExpr *);
+
     // special expr
     virtual void visit(ast::LvalueExpr * e);
     virtual void visit(ast::AssignExpr * e);

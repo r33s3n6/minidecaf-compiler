@@ -101,8 +101,8 @@ void scan_end();
 
 /*   SUBSECTION 2.2: associativeness & precedences */
 %right    "then" "else"
-%nonassoc "?" ":"
 %right    "="
+%right    "?" ":"
 %left     "||"
 %left     "&&"
 %left     "==" "!="

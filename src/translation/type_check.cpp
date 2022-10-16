@@ -55,6 +55,10 @@ class SemPass2 : public ast::Visitor {
     virtual void visit(ast::AndExpr * e) { visitBinaryExpr(e); }
     virtual void visit(ast::OrExpr  * e) { visitBinaryExpr(e); }
 
+
+    // ternary operator
+    virtual void visit(ast::IfExpr * e);
+
     // special expr
     virtual void visit(ast::LvalueExpr * e);
     virtual void visit(ast::AssignExpr * e);
@@ -136,6 +140,19 @@ void SemPass2::visitBinaryExpr(ast::BinaryExprBase * e) {
     e->ATTR(type) = BaseType::Int;
 }
 
+void SemPass2::visit(ast::IfExpr * e){
+    e->condition->accept(this);
+    expect(e->condition, BaseType::Int);
+
+    e->true_brch->accept(this);
+    expect(e->true_brch, BaseType::Int);
+
+    e->false_brch->accept(this);
+    expect(e->false_brch, BaseType::Int);
+
+    e->ATTR(type) = BaseType::Int;
+}
+
 
 
 
@@ -213,8 +230,15 @@ void SemPass2::visit(ast::IfStmt *s) {
     s->condition->accept(this);
     if (!s->condition->ATTR(type)->equal(BaseType::Int)) {
         issue(s->condition->getLocation(), new BadTestExprError());
-        ;
     }
+    if (dynamic_cast<ast::VarDecl *>(s->true_brch)) {
+        issue(s->true_brch->getLocation(), new SyntaxError("expect statement"));
+    }
+    if (dynamic_cast<ast::VarDecl *>(s->false_brch)) {
+        issue(s->false_brch->getLocation(), new SyntaxError("expect statement"));
+    }
+
+    
 
     s->true_brch->accept(this);
     s->false_brch->accept(this);

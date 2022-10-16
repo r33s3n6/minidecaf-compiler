@@ -92,8 +92,10 @@ void Translation::visit(ast::FuncDefn *f) {
  *   different kinds of Lvalue require different translation
  */
 void Translation::visit(ast::AssignExpr *s) {
-    s->left->accept(this);
+    // generate temp for right first
     s->e->accept(this);
+
+    s->left->accept(this);
 
     tr->genAssign(s->left->ATTR(sym)->getTemp(), s->e->ATTR(val));
 
@@ -111,18 +113,30 @@ void Translation::visit(ast::ExprStmt *s) { s->e->accept(this); }
  *   you don't need to test whether the false_brch is empty
  */
 void Translation::visit(ast::IfStmt *s) {
-    Label L1 = tr->getNewLabel(); // entry of the false branch
-    Label L2 = tr->getNewLabel(); // exit
-    s->condition->accept(this);
-    tr->genJumpOnZero(L1, s->condition->ATTR(val));
+    if(dynamic_cast<ast::EmptyStmt*>(s->false_brch)) {
+        Label done_label = tr->getNewLabel(); // done
+        s->condition->accept(this);
+        tr->genJumpOnZero(done_label, s->condition->ATTR(val));
+        s->true_brch->accept(this);
+        tr->genMarkLabel(done_label);
 
-    s->true_brch->accept(this);
-    tr->genJump(L2); // done
+    } else {
+        Label false_branch_label = tr->getNewLabel(); // entry of the false branch
 
-    tr->genMarkLabel(L1);
-    s->false_brch->accept(this);
+        Label done_label = tr->getNewLabel(); // done
+        s->condition->accept(this);
+        tr->genJumpOnZero(false_branch_label, s->condition->ATTR(val));
 
-    tr->genMarkLabel(L2);
+        s->true_brch->accept(this);
+        tr->genJump(done_label); // done
+
+        tr->genMarkLabel(false_branch_label);
+        s->false_brch->accept(this);
+
+        tr->genMarkLabel(done_label);
+
+    }
+
 }
 /* Translating an ast::WhileStmt node.
  */
@@ -256,6 +270,26 @@ void Translation::visit(ast::OrExpr *e) {
     e->ATTR(val) = tr->genLOr(e->e1->ATTR(val), e->e2->ATTR(val));
 }
 
+void Translation::visit(ast::IfExpr *e) {
+    e->ATTR(val) = tr->getNewTempI4(); // result
+    Label false_branch_label = tr->getNewLabel(); // false branch
+    Label done_label = tr->getNewLabel(); // done
+
+    e->condition->accept(this); // condition
+    tr->genJumpOnZero(false_branch_label, e->condition->ATTR(val));
+    // true branch
+    e->true_brch->accept(this);
+    tr->genAssign(e->ATTR(val), e->true_brch->ATTR(val));
+    tr->genJump(done_label);
+
+    tr->genMarkLabel(false_branch_label);
+    // false branch
+    e->false_brch->accept(this);
+    tr->genAssign(e->ATTR(val), e->false_brch->ATTR(val));
+
+    tr->genMarkLabel(done_label);
+
+}   
 
 
 /* Translating an ast::IntConst node.
@@ -296,7 +330,13 @@ void Translation::visit(ast::BitNotExpr *e) {
 void Translation::visit(ast::LvalueExpr *e) {
     e->lvalue->accept(this);
 
+    // for int x = (x=1);
     e->ATTR(val) = e->lvalue->ATTR(sym)->getTemp();
+    // if(!e->ATTR(val)){
+    //     e->lvalue->ATTR(sym)->attachTemp(tr->getNewTempI4());
+    //     e->ATTR(val) = e->lvalue->ATTR(sym)->getTemp();
+    // }
+    
 
 }
 
