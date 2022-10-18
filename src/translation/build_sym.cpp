@@ -76,6 +76,7 @@ class SemPass1 : public ast::Visitor {
     // special expr
     virtual void visit(ast::LvalueExpr * e);
     virtual void visit(ast::AssignExpr * e);
+    virtual void visit(ast::CallExpr   * e);
 
     // lvalues
     virtual void visit(ast::VarRef *);
@@ -155,6 +156,29 @@ void SemPass1::visit(ast::FuncDefn *fdef) {
 
     // closes function scope
     scopes->close();
+}
+
+void SemPass1::visit(ast::CallExpr *e){
+    Symbol *sym = scopes->lookup(e->name, e->getLocation(), true);
+    
+    if(!sym){
+        issue(e->getLocation(), new SymbolNotFoundError(e->name));
+        return;
+    }
+
+    Function* f = dynamic_cast<Function*>(sym);
+
+    if(!f){
+        issue(e->getLocation(), new NotMethodError(sym));
+        return;
+    }
+
+    e->ATTR(sym) = f;
+
+    // build symbol for each argument
+    for (auto it = e->args->begin(); it != e->args->end(); ++it)
+        (*it)->accept(this);
+
 }
 
 /* Visits an ast::IfStmt node.

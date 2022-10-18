@@ -38,7 +38,6 @@ class ASTNode {
         BOOL_TYPE,
         BREAK_STMT,
         CONT_STMT,
-        CALL_EXPR,
         COMP_STMT,
         DIV_EXPR,
         EQU_EXPR,
@@ -60,6 +59,7 @@ class ASTNode {
         NEQ_EXPR,
         NOT_EXPR,
         OR_EXPR,
+        CALL_EXPR,
         PROGRAM,
         RETURN_STMT,
         SUB_EXPR,
@@ -407,6 +407,7 @@ class ContStmt : public Statement {
     virtual void dumpTo(std::ostream &);
 };
 
+
 /* Node representing the reference to a variable.
  *
  * NOTE:
@@ -739,6 +740,22 @@ class BitNotExpr : public UnaryExprBase {
     virtual void dumpTo(std::ostream &);
 
 };
+
+
+class CallExpr : public Expr {
+  public:
+    CallExpr(std::string name, ExprList *args, Location *l);
+
+    virtual void accept(Visitor *);
+    virtual void dumpTo(std::ostream &);
+
+  public:
+    std::string name;
+    ExprList *args;
+
+    symb::Function *ATTR(sym); // for semantic analysis
+};
+
 extern bool print_decorated_ast;
 } // namespace ast
 } // namespace mind

@@ -62,6 +62,7 @@ class SemPass2 : public ast::Visitor {
     // special expr
     virtual void visit(ast::LvalueExpr * e);
     virtual void visit(ast::AssignExpr * e);
+    virtual void visit(ast::CallExpr   * e);
 
 
     // Visiting statements
@@ -350,6 +351,31 @@ void SemPass2::visit(ast::FuncDefn *f) {
     for (it = f->stmts->begin(); it != f->stmts->end(); ++it)
         (*it)->accept(this);
     scopes->close();
+}
+
+void SemPass2::visit(ast::CallExpr * e){
+    auto param_list = e->ATTR(sym)->getType()->getArgList();
+    auto param_it = param_list->begin();
+
+    // check if the number of arguments is correct
+    if (e->args->length() != param_list->length()) {
+        issue(e->getLocation(), new BadArgCountError(e->ATTR(sym)));
+    }
+
+    // check type of arguments
+    for (auto arg_it = e->args->begin(); arg_it != e->args->end(); ++arg_it) {
+        (*arg_it)->accept(this);
+
+        if (!(*arg_it)->ATTR(type)->compatible(*param_it)) {
+            issue((*arg_it)->getLocation(),
+                  new IncompatibleError(*param_it, (*arg_it)->ATTR(type)));
+        }
+        
+        ++param_it;
+    }
+
+    e->ATTR(type) = e->ATTR(sym)->getType()->getResultType();
+
 }
 
 /* Visits an ast::Program node.
