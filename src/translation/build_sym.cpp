@@ -137,6 +137,7 @@ void SemPass1::visit(ast::FuncDefn *fdef) {
     
     Function *f = new Function(fdef->name, t, fdef->getLocation());
     fdef->ATTR(sym) = f;
+    
 
     scopes->declare(f);
 
@@ -338,6 +339,16 @@ void SemPass1::visit(ast::VarDecl *vdecl) {
 
     // TODO: 4. Special processing for global variables
     if (scopes->top()->getKind() == Scope::GLOBAL){
+
+        ast::IntConst *init = dynamic_cast<ast::IntConst*>(vdecl->init);
+        if (vdecl->init && !init){
+            issue(vdecl->getLocation(), new SyntaxError("global init must be constant"));
+            return;
+        }
+        if (init){
+            v->setGlobalInit(init->value);
+        }
+        
         // GlobalScope *gscope = dynamic_cast<GlobalScope *>(scopes->top());
         // gscope->
         // TODO:

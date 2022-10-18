@@ -112,6 +112,7 @@ struct RiscvInstr : public Instr {
         RET,
         LW,
         LI,
+        LA,
         SW,
         MOVE,
 
@@ -176,6 +177,10 @@ class RiscvDesc : public MachineDesc {
     void emitTac(tac::Tac *);
     // translates a LoadImm4 TAC into assembly instructions
     void emitLoadImm4Tac(tac::Tac *);
+    void emitLoadSymbolTac(tac::Tac *);
+    void emitLoadTac(tac::Tac *);
+    void emitStoreTac(tac::Tac *);
+
     void emitPushTac(tac::Tac *t);
     void emitPopTac(tac::Tac *t);
     void emitCallTac(tac::Tac *t);

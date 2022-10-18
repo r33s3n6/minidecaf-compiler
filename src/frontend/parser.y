@@ -100,6 +100,7 @@ void scan_end();
 %nterm <mind::ast::Statement*> Stmt ReturnStmt ExprStmt IfStmt CompStmt WhileStmt VarDecl ForStmt DoWhileStmt OptExprStmt
 %nterm <mind::ast::Expr*>      Expr OptionalExpr 
 %nterm <mind::ast::Lvalue*>    Lvalue
+%nterm <mind::ast::ASTNode*>   FuncOrDecl
 
 /*   SUBSECTION 2.2: associativeness & precedences */
 %right    "then" "else"
@@ -126,17 +127,23 @@ void scan_end();
 %%
 Program     : FoDList
                 { /* we don't write $$ = XXX here. */
-				          setParseTree($1);
+				    setParseTree($1);
                 }
             ;
-FoDList     : FuncDefn 
+FoDList     : FuncOrDecl 
                 { $$ = new ast::Program($1, POS(@1)); } 
-            | FoDList FuncDefn
+            | FoDList FuncOrDecl
                 {
                   $1->func_and_globals->append($2);
                   $$ = $1;
                 }
             ;
+FuncOrDecl  : FuncDefn
+                { $$ = $1; }
+            | VarDecl
+                { $$ = $1; }
+            ;
+
 FuncDefn    : Type IDENTIFIER "(" FormalList ")" "{" StmtList "}" 
                 {
                   $$ = new ast::FuncDefn($2, $1, $4, $7, POS(@1));

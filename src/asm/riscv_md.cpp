@@ -109,10 +109,53 @@ void RiscvDesc::emitPieces(scope::GlobalScope *gscope, Piece *ps,
 
     _result = &os;
     // output to .data and .bss segment
-    std::ostringstream _data, _bss;
+    // std::ostringstream _data, _bss;
+
+    util::List<symb::Variable*> bss_vars;
+    util::List<symb::Variable*> data_vars;
 
     if (Option::getLevel() == Option::ASMGEN) {
         // program preamble
+        
+ 
+        for (auto it = gscope->begin(); it != gscope->end(); ++it) {
+            symb::Variable *sym = dynamic_cast<symb::Variable*>(*it);
+            if (!sym) continue;
+
+            if (sym->isGlobalVar()) {
+                if(sym->getGlobalInit() == 0){
+                    bss_vars.append(sym);
+                } else {
+                    data_vars.append(sym);
+                }
+            }
+        }
+
+        // .data segment
+        emit(EMPTY_STR, ".data", NULL);
+        emit(EMPTY_STR, ".align 4", NULL);
+
+
+        for (auto it = data_vars.begin(); it != data_vars.end(); ++it) {
+            symb::Variable *sym = *it;
+            emit(EMPTY_STR, (".global " + sym->getName()).c_str(), NULL);
+            emit(sym->getName(), NULL, NULL);
+            emit(EMPTY_STR, (".word " + std::to_string(sym->getGlobalInit())).c_str(), NULL);
+        }
+
+        // .bss segment
+        emit(EMPTY_STR, ".bss", NULL);
+        emit(EMPTY_STR, ".align 4", NULL);
+
+        for (auto it = bss_vars.begin(); it != bss_vars.end(); ++it) {
+            symb::Variable *sym = *it;
+            emit(EMPTY_STR, (".global " + sym->getName()).c_str(), NULL);
+            emit(sym->getName(), NULL, NULL);
+            emit(EMPTY_STR,(".zero " + std::to_string(sym->getType()->getSize())).c_str(), NULL);
+        }
+
+
+
         emit(EMPTY_STR, ".text", NULL);
         emit(EMPTY_STR, ".globl main", NULL);
         emit(EMPTY_STR, ".align 2", NULL);
@@ -219,6 +262,15 @@ void RiscvDesc::emitTac(Tac *t) {
     case Tac::LOAD_IMM4:
         emitLoadImm4Tac(t);
         break;
+    case Tac::LOAD:
+        emitLoadTac(t);
+        break;
+    case Tac::STORE:
+        emitStoreTac(t);
+        break;
+    case Tac::LOAD_SYMBOL:
+        emitLoadSymbolTac(t);
+        break;
     case Tac::PUSH:
         emitPushTac(t);
         break;
@@ -307,6 +359,52 @@ void RiscvDesc::emitLoadImm4Tac(Tac *t) {
              {});
 }
 
+void RiscvDesc::emitLoadSymbolTac(Tac *t) {
+    // eliminates useless assignments
+    if (!t->LiveOut->contains(t->op0.var)) {
+        addInstr(RiscvInstr::COMMENT, NULL, NULL, NULL, 0, EMPTY_STR, "useless code: T" + std::to_string(t->op0.var->id) + " is not used");
+        return;
+    }
+        
+    int r0 = getRegForWrite(t->op0.var, 0, 0, t->LiveOut);
+    addInstr(RiscvInstr::LA, _reg[r0], NULL, NULL, 0, t->op1.name, {});
+}
+
+/* Translates a Load TAC into Riscv instructions.
+ *
+ * PARAMETERS:
+ *   t     - the Load TAC
+ */
+
+void RiscvDesc::emitLoadTac(Tac *t) {
+    // eliminates useless assignments
+    if (!t->LiveOut->contains(t->op0.var)) {
+        addInstr(RiscvInstr::COMMENT, NULL, NULL, NULL, 0, EMPTY_STR, "useless code");
+        return;
+    }
+        
+    // uses "load word" instruction
+    int r1 = getRegForRead(t->op1.var, 0, t->LiveOut);
+    int r0 = getRegForWrite(t->op0.var, r1, 0, t->LiveOut);
+    
+    addInstr(RiscvInstr::LW, _reg[r0], _reg[r1], NULL, t->op2.ival, EMPTY_STR,
+             {});
+
+}
+
+/* Translates a Store TAC into Riscv instructions.
+ *
+ * PARAMETERS:
+ *   t     - the Store TAC
+ */
+void RiscvDesc::emitStoreTac(Tac *t) {
+    // uses "store word" instruction
+    int r0 = getRegForRead(t->op0.var, 0, t->LiveOut);
+    int r1 = getRegForRead(t->op1.var, r0, t->LiveOut);
+    addInstr(RiscvInstr::SW, _reg[r0], _reg[r1], NULL, t->op2.ival, EMPTY_STR,
+             {});
+}
+
 void RiscvDesc::emitPushTac(Tac *t) {
     int r0 = getRegForRead(t->op0.var, 0, t->LiveOut);
     addInstr(RiscvInstr::SW, _reg[r0], _reg[RiscvReg::SP], NULL, (-4)+(-4*_param_counter), EMPTY_STR,
@@ -352,7 +450,6 @@ void RiscvDesc::emitAssignTac(Tac *t) {
     }
         
 
-    // TODO: global variables
     int r1 = getRegForRead(t->op1.var, 0, t->LiveOut);
     int r0 = getRegForWrite(t->op0.var, r1, 0, t->LiveOut);
     
@@ -609,6 +706,10 @@ void RiscvDesc::emitInstr(RiscvInstr *i) {
 
     case RiscvInstr::LI:
         oss << "li" << i->r0->name << ", " << i->i;
+        break;
+    
+    case RiscvInstr::LA:
+        oss << "la" << i->r0->name << ", " << i->l;
         break;
 
     case RiscvInstr::NEG:

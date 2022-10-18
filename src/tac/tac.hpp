@@ -94,6 +94,9 @@ struct Tac {
         CALL,
         RETURN,
         LOAD_IMM4,
+        LOAD,
+        LOAD_SYMBOL,
+        STORE,
         MEMO
     } Kind;
 
@@ -139,6 +142,9 @@ struct Tac {
     static Tac *LNot(Temp dest, Temp src);
     static Tac *BNot(Temp dest, Temp src);
     static Tac *LoadImm4(Temp dest, int value);
+    static Tac *Load(Temp dest, Temp base_addr, int offset);
+    static Tac *LoadSymbol(Temp dest, std::string name);
+    static Tac *Store(Temp src, Temp base_addr, int offset);
     static Tac *Jump(Label dest);
     static Tac *JZero(Label dest, Temp cond);
     static Tac *Pop(Temp dest);

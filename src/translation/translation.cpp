@@ -74,7 +74,6 @@ void Translation::visit(ast::FuncDefn *f) {
 
     tr->startFunc(fun);
 
-    // TODO: You may process params here, i.e use reg or stack to pass parameters
     for (auto it = f->formals->begin(); it != f->formals->end(); ++it) {
         auto v = (*it)->ATTR(sym);
         tr->genPop(v->getTemp());
@@ -118,9 +117,17 @@ void Translation::visit(ast::AssignExpr *s) {
 
     s->left->accept(this);
 
-    tr->genAssign(s->left->ATTR(sym)->getTemp(), s->e->ATTR(val));
+    if (s->left->ATTR(sym)->isGlobalVar()) {
 
-    s->ATTR(val) = s->left->ATTR(sym)->getTemp();
+        Temp addr = tr->genLoadSymbol(s->left->ATTR(sym));
+        tr->genStore(s->e->ATTR(val), addr, 0);
+    } else {
+        tr->genAssign(s->left->ATTR(sym)->getTemp(), s->e->ATTR(val));
+    }
+    
+
+    // s->ATTR(val) = s->left->ATTR(sym)->getTemp();
+    s->ATTR(val) = s->e->ATTR(val);
 
 }
 
@@ -414,12 +421,22 @@ void Translation::visit(ast::BitNotExpr *e) {
 void Translation::visit(ast::LvalueExpr *e) {
     e->lvalue->accept(this);
 
-    // for int x = (x=1);
-    e->ATTR(val) = e->lvalue->ATTR(sym)->getTemp();
-    // if(!e->ATTR(val)){
-    //     e->lvalue->ATTR(sym)->attachTemp(tr->getNewTempI4());
-    //     e->ATTR(val) = e->lvalue->ATTR(sym)->getTemp();
-    // }
+    symb::Variable *var = dynamic_cast<symb::Variable *>(e->lvalue->ATTR(sym));
+    if (!var) {
+        abort();
+    }
+
+    if (var->isGlobalVar()) {
+        Temp var_addr = tr->genLoadSymbol(var);
+
+        e->ATTR(val) = tr->genLoad(var_addr, 0);
+        
+    } else {
+        e->ATTR(val) = e->lvalue->ATTR(sym)->getTemp();
+    }
+
+    
+
     
 
 }

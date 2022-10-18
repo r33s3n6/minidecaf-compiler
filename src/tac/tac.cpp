@@ -474,6 +474,43 @@ Tac *Tac::LoadImm4(Temp dest, int value) {
     return t;
 }
 
+Tac *Tac::Load(Temp dest, Temp base_addr, int offset) {
+    REQUIRE_I4(dest);
+    REQUIRE_I4(base_addr);
+
+    Tac *t = allocateNewTac(Tac::LOAD);
+    t->op0.var = dest;
+    t->op1.var = base_addr;
+    t->op2.ival = offset;
+
+    return t;
+}
+
+Tac *Tac::LoadSymbol(Temp dest, std::string name) {
+    REQUIRE_I4(dest);
+
+
+    Tac *t = allocateNewTac(Tac::LOAD_SYMBOL);
+    t->op0.var = dest;
+    t->op1.name = name;
+
+    return t;
+}
+
+Tac *Tac::Store( Temp src, Temp base_addr, int offset) {
+    REQUIRE_I4(base_addr);
+    REQUIRE_I4(src);
+
+    Tac *t = allocateNewTac(Tac::STORE);
+    t->op0.var = src;
+    t->op1.var = base_addr;
+    t->op2.ival = offset;
+    
+
+    return t;
+}
+
+
 /* Creates a Jump tac.
  *
  * NOTE:
@@ -759,6 +796,18 @@ void Tac::dump(std::ostream &os) {
 
     case LOAD_IMM4:
         os << "    " << op0.var << " <- " << op1.ival;
+        break;
+    
+    case LOAD:
+        os << "    " << op0.var << " <- *(" << op1.var << " + " << op2.ival << ")";
+        break;
+    
+    case LOAD_SYMBOL:
+        os << "    " << op0.var << " <- &" << op1.name;
+        break;
+    
+    case STORE:
+        os << "    " << op0.var << " -> *(" << op1.var << " + " << op2.ival << ")";
         break;
 
     default:

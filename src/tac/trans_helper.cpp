@@ -474,6 +474,23 @@ Temp TransHelper::genLoadImm4(int value) {
     return c;
 }
 
+Temp TransHelper::genLoad(Temp base_addr, int offset) {
+    Temp c = getNewTempI4();
+    chainUp(Tac::Load(c, base_addr, offset));
+    return c;
+}
+
+Temp TransHelper::genLoadSymbol(symb::Symbol * symb) {
+    Temp c = getNewTempI4();
+    chainUp(Tac::LoadSymbol(c, symb->getName()));
+    return c;
+}
+
+void TransHelper::genStore(Temp value, Temp base_addr, int offset) {
+    chainUp(Tac::Store(value, base_addr, offset));
+
+}
+
 /* Appends a MarkLabel tac node to the current list.
  *
  * PARAMETERS:

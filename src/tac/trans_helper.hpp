@@ -70,6 +70,9 @@ class TransHelper {
     // Miscellaneous
     void genAssign(Temp, Temp);
     Temp genLoadImm4(int);
+    Temp genLoad(Temp, int);
+    Temp genLoadSymbol(symb::Symbol *);
+    void genStore(Temp, Temp, int);
     void genMarkLabel(Label);
     void genMemo(const char *);
 
