@@ -219,6 +219,15 @@ void RiscvDesc::emitTac(Tac *t) {
     case Tac::LOAD_IMM4:
         emitLoadImm4Tac(t);
         break;
+    case Tac::PUSH:
+        emitPushTac(t);
+        break;
+    case Tac::POP:
+        emitPopTac(t);
+        break;
+    case Tac::CALL:
+        emitCallTac(t);
+        break;
     case Tac::ASSIGN:
         emitAssignTac(t);
         break;
@@ -297,6 +306,37 @@ void RiscvDesc::emitLoadImm4Tac(Tac *t) {
     addInstr(RiscvInstr::LI, _reg[r0], NULL, NULL, t->op1.ival, EMPTY_STR,
              {});
 }
+
+void RiscvDesc::emitPushTac(Tac *t) {
+    int r0 = getRegForRead(t->op0.var, 0, t->LiveOut);
+    addInstr(RiscvInstr::SW, _reg[r0], _reg[RiscvReg::SP], NULL, (-4)+(-4*_param_counter), EMPTY_STR,
+             {});
+
+    _param_counter++;
+}
+
+void RiscvDesc::emitPopTac(Tac *t) {
+    int r0 = getRegForWrite(t->op0.var, 0, 0, t->LiveOut);
+    addInstr(RiscvInstr::LW, _reg[r0], _reg[RiscvReg::FP], NULL, 4*_param_counter, EMPTY_STR,
+             {});
+    _param_counter++;
+}
+
+void RiscvDesc::emitCallTac(Tac *t) {
+    spillDirtyRegs(t->LiveOut);
+    // modify sp
+    addInstr(RiscvInstr::ADDI, _reg[RiscvReg::SP], _reg[RiscvReg::SP], NULL, -4*_param_counter, EMPTY_STR,
+             {});
+    addInstr(RiscvInstr::JAL, _reg[RiscvReg::RA], NULL, NULL, 0, "_" + t->op1.label->str_form, {});
+    addInstr(RiscvInstr::ADDI, _reg[RiscvReg::SP], _reg[RiscvReg::SP], NULL, 4*_param_counter, EMPTY_STR,
+             {});
+    // set return value
+    _reg[RiscvReg::A0]->var = t->op0.var;
+    _reg[RiscvReg::A0]->dirty = true;
+    _param_counter = 0;
+}
+
+
 
 
 /* Translates an Assign TAC into Riscv instructions.
@@ -469,6 +509,8 @@ void RiscvDesc::getParamReg(Tac *t, int cnt) {
 void RiscvDesc::emitFuncty(Functy f) {
     mind_assert(NULL != f);
 
+    _param_counter = 0;
+
     _frame = new RiscvStackFrameManager(-3 * WORD_SIZE);
     FlowGraph *g = FlowGraph::makeGraph(f);
     g->simplify();        // simple optimization
@@ -597,6 +639,10 @@ void RiscvDesc::emitInstr(RiscvInstr *i) {
         oss << "sw" << i->r0->name << ", " << i->i << "(" << i->r1->name << ")";
         break;
     
+    case RiscvInstr::JAL:
+        oss << "jal" << i->r0->name << ", " << i->l;
+        break;
+
     case RiscvInstr::RET:
         oss << "ret";
         break;
@@ -639,6 +685,10 @@ void RiscvDesc::emitInstr(RiscvInstr *i) {
 
     case RiscvInstr::XOR:
         oss << "xor" << i->r0->name << ", " << i->r1->name << ", " << i->r2->name;
+        break;
+
+    case RiscvInstr::ADDI:
+        oss << "addi" << i->r0->name << ", " << i->r1->name << ", " << i->i;
         break;
 
     case RiscvInstr::XORI:

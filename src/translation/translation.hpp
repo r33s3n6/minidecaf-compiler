@@ -73,6 +73,7 @@ class Translation : public ast::Visitor {
     // special expr
     virtual void visit(ast::LvalueExpr * e);
     virtual void visit(ast::AssignExpr * e);
+    virtual void visit(ast::CallExpr   * e);
 
 
     virtual ~Translation() {}

@@ -65,3 +65,17 @@ void FuncDefn::dumpTo(std::ostream &os) {
     os << stmts << ")";
     decIndent(os);
 }
+
+
+CallExpr::CallExpr(std::string name, ExprList *args, Location *l) : name(name), args(args) {
+    setBasicInfo(CALL_EXPR, l);
+}
+
+void CallExpr::accept(Visitor *v) { v->visit(this); }
+
+void CallExpr::dumpTo(std::ostream &os) {
+    ASTNode::dumpTo(os);
+    newLine(os);
+    os << '"' << name << '"' << " " << args << ")";
+    decIndent(os);
+}

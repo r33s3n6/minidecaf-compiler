@@ -91,6 +91,7 @@ struct Tac {
         JZERO,
         PUSH,
         POP,
+        CALL,
         RETURN,
         LOAD_IMM4,
         MEMO
@@ -142,6 +143,7 @@ struct Tac {
     static Tac *JZero(Label dest, Temp cond);
     static Tac *Pop(Temp dest);
     static Tac *Push(Temp src);
+    static Tac *Call(Temp dest, Label func);
     static Tac *Return(Temp value);
     static Tac *Mark(Label label);
     static Tac *Memo(const char *);

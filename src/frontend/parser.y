@@ -92,12 +92,13 @@ void scan_end();
 %token <int>         ICONST     "iconst"
 
 %nterm <mind::ast::StmtList*>  StmtList
-%nterm <mind::ast::VarList*>   FormalList 
+%nterm <mind::ast::VarList*>   FormalList NonNullFormalList
 %nterm <mind::ast::Program*>   Program FoDList
 %nterm <mind::ast::FuncDefn*>  FuncDefn
+%nterm <mind::ast::ExprList*>  ExprList NonNullExprList
 %nterm <mind::ast::Type*>      Type
 %nterm <mind::ast::Statement*> Stmt ReturnStmt ExprStmt IfStmt CompStmt WhileStmt VarDecl ForStmt DoWhileStmt OptExprStmt
-%nterm <mind::ast::Expr*>      Expr OptionalExpr
+%nterm <mind::ast::Expr*>      Expr OptionalExpr 
 %nterm <mind::ast::Lvalue*>    Lvalue
 
 /*   SUBSECTION 2.2: associativeness & precedences */
@@ -145,9 +146,23 @@ FuncDefn    : Type IDENTIFIER "(" FormalList ")" "{" StmtList "}"
                   $$ = new ast::FuncDefn($2, $1, $4, new ast::EmptyStmt(POS(@6)), POS(@1));
                 }
             ;
-FormalList  : /* EMPTY */
-                { $$ = new ast::VarList(); } 
-
+FormalList  : /* empty */
+                { $$ = new ast::VarList(); }
+            | NonNullFormalList
+                { $$ = $1; }
+            ;
+NonNullFormalList
+            : Type IDENTIFIER
+                { 
+                    $$ = new ast::VarList();
+                    $$->append(new ast::VarDecl($2, $1, POS(@1)));
+                } 
+            | FormalList "," Type IDENTIFIER
+                {
+                  $$ = $1;
+                  $$->append(new ast::VarDecl($4, $3, POS(@3)));
+                }
+            ;
 Type        : INT
                 { $$ = new ast::IntType(POS(@1)); }
 StmtList    : /* empty */
@@ -254,7 +269,24 @@ Expr        : ICONST
                 { $$ = new ast::NotExpr($2, POS(@1)); }
             | Lvalue "=" Expr
                 { $$ = new ast::AssignExpr($1, $3, POS(@2)); }
+            | IDENTIFIER "(" ExprList ")"
+                { $$ = new ast::CallExpr($1, $3, POS(@1)); }
             ;
+ExprList    : /* empty */
+                { $$ = new ast::ExprList(); }
+            | NonNullExprList
+                { $$ = $1; }
+            ;
+NonNullExprList
+            : Expr
+                { $$ = new ast::ExprList(); $$->append($1); }
+            | NonNullExprList "," Expr
+                { 
+                    $1->append($3);
+                    $$ = $1;
+                }
+            ;
+
 Lvalue      : IDENTIFIER
                 { $$ = new ast::VarRef($1, POS(@1)); }
             ;

@@ -60,10 +60,12 @@ class TransHelper {
     Temp genBNot(Temp);
     // Memory Access
     Temp genPop(void);
+    void genPop(Temp c);
     void genPush(Temp);
     // Control-flow related
     void genJump(Label);
     void genJumpOnZero(Label, Temp);
+    Temp genCall(Label func);
     void genReturn(Temp);
     // Miscellaneous
     void genAssign(Temp, Temp);

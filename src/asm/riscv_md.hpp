@@ -102,11 +102,13 @@ struct RiscvInstr : public Instr {
         OR,
         XOR,
         // binary operator with immediate
+        ADDI,
         XORI,
 
         // branch
         J,
         BEQZ,
+        JAL,
         RET,
         LW,
         LI,
@@ -162,6 +164,8 @@ class RiscvDesc : public MachineDesc {
     RiscvStackFrameManager *_frame;
     // label counter for allocating new labels
     int _label_counter;
+
+    int _param_counter = 0;
     
     // allocates a new label
     const char *getNewLabel(void);
@@ -172,6 +176,9 @@ class RiscvDesc : public MachineDesc {
     void emitTac(tac::Tac *);
     // translates a LoadImm4 TAC into assembly instructions
     void emitLoadImm4Tac(tac::Tac *);
+    void emitPushTac(tac::Tac *t);
+    void emitPopTac(tac::Tac *t);
+    void emitCallTac(tac::Tac *t);
     void emitAssignTac(tac::Tac *t);
     // translates a Unary TAC into assembly instructions
     void emitUnaryTac(RiscvInstr::OpCode, tac::Tac *);

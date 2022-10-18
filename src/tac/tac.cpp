@@ -548,6 +548,14 @@ Tac *Tac::Pop(Temp dest) { // dest may be NULL
     return t;
 }
 
+Tac *Tac::Call(Temp dest, Label func) {
+    Tac *t = allocateNewTac(Tac::CALL);
+    t->op0.var = dest;
+    t->op1.label = func;
+
+    return t;
+}
+
 /* Creates a Return tac.
  *
  * NOTE:
@@ -582,6 +590,8 @@ Tac *Tac::Mark(Label label) {
 
     return t;
 }
+
+
 
 /* Outputs a temporary variable.
  *
@@ -737,6 +747,10 @@ void Tac::dump(std::ostream &os) {
             os << "    " << op0.var << " <- pop()";
         else
             os << "    pop()";
+        break;
+
+    case CALL:
+        os << "    " << op0.var << " <- call " << op1.label;
         break;
 
     case RETURN:

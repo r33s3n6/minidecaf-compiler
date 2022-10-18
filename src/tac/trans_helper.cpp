@@ -404,6 +404,10 @@ Temp TransHelper::genPop(void) {
     return c;
 }
 
+void TransHelper::genPop(Temp c) {
+    chainUp(Tac::Pop(c));
+}
+
 /* Appends a Push tac node to the current list.
  *
  * PARAMETERS:
@@ -430,6 +434,12 @@ void TransHelper::genJump(Label dest) { chainUp(Tac::Jump(dest)); }
  */
 void TransHelper::genJumpOnZero(Label dest, Temp cond) {
     chainUp(Tac::JZero(dest, cond));
+}
+
+Temp TransHelper::genCall(Label func) {
+    Temp c = getNewTempI4();
+    chainUp(Tac::Call(c, func));
+    return c;
 }
 
 /* Appends a Return tac node to the current list.

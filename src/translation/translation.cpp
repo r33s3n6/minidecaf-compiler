@@ -75,6 +75,10 @@ void Translation::visit(ast::FuncDefn *f) {
     tr->startFunc(fun);
 
     // TODO: You may process params here, i.e use reg or stack to pass parameters
+    for (auto it = f->formals->begin(); it != f->formals->end(); ++it) {
+        auto v = (*it)->ATTR(sym);
+        tr->genPop(v->getTemp());
+    }
 
 
     // translates statement by statement
@@ -84,6 +88,23 @@ void Translation::visit(ast::FuncDefn *f) {
     tr->genReturn(tr->genLoadImm4(0)); // Return 0 by default
 
     tr->endFunc();
+}
+
+void Translation::visit(ast::CallExpr *e) {
+    // calculates the arguments `e->args`
+
+    for (auto it = e->args->begin(); it != e->args->end(); ++it)
+        (*it)->accept(this);
+
+    // push the arguments in reverse order
+    for (auto it = e->args->rbegin(); it != e->args->rend(); ++it) {
+        tr->genPush((*it)->ATTR(val));
+    }
+
+    Temp ret = tr->genCall(e->ATTR(sym)->getEntryLabel());
+
+    e->ATTR(val) = ret;
+    
 }
 
 /* Translating an ast::AssignStmt node.

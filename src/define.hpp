@@ -102,6 +102,7 @@ typedef util::List<Statement *> StmtList;       // list of Statement
 typedef util::List<Expr *> ExprList;            // list of Expr
 typedef util::List<ASTNode *> FuncOrGlobalList; // list of Expr
 
+
 } // namespace ast
 #endif
 
@@ -116,6 +117,8 @@ typedef struct TempObject *Temp;
 typedef struct LabelObject *Label;
 typedef struct VTableObject *VTable;
 typedef struct FunctyObject *Functy;
+
+typedef util::List<Temp> TempList;              // list of Temp
 
 struct Tac;
 struct Piece;
