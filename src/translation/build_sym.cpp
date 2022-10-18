@@ -39,6 +39,8 @@ class SemPass1 : public ast::Visitor {
     // visiting statements
     virtual void visit(ast::IfStmt *);
     virtual void visit(ast::WhileStmt *);
+    virtual void visit(ast::ForStmt *);
+    virtual void visit(ast::DoWhileStmt *);
     virtual void visit(ast::CompStmt *);
     virtual void visit(ast::VarDecl *);
     virtual void visit(ast::ExprStmt *);
@@ -174,6 +176,29 @@ void SemPass1::visit(ast::IfStmt *s) {
 void SemPass1::visit(ast::WhileStmt *s) {
     s->condition->accept(this);
     s->loop_body->accept(this);
+}
+
+void SemPass1::visit(ast::ForStmt * s) {
+    // start new scope
+    Scope *scope = new LocalScope();
+    s->ATTR(scope) = scope;
+    scopes->open(scope);
+
+    s->init->accept(this);
+    s->condition->accept(this);
+    s->update->accept(this);
+
+    s->loop_body->accept(this);
+
+    // close scope
+    scopes->close();
+
+}
+
+void SemPass1::visit(ast::DoWhileStmt * s) {
+    s->loop_body->accept(this);
+    s->condition->accept(this);
+    
 }
 
 /* Visiting an ast::CompStmt node.

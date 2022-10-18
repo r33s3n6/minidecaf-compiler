@@ -83,6 +83,7 @@ IDENTIFIER    ([A-Za-z][_0-9A-Za-z]*)
 "while"       { return yy::parser::make_WHILE      (loc); }
 "for"         { return yy::parser::make_FOR        (loc); }
 "break"       { return yy::parser::make_BREAK      (loc); }
+"continue"    { return yy::parser::make_CONTINUE   (loc); }
 
 ";"           { return yy::parser::make_SEMICOLON  (loc); }
 ","           { return yy::parser::make_COMMA      (loc); }

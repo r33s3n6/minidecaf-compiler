@@ -141,27 +141,90 @@ void Translation::visit(ast::IfStmt *s) {
 /* Translating an ast::WhileStmt node.
  */
 void Translation::visit(ast::WhileStmt *s) {
-    Label L1 = tr->getNewLabel();
-    Label L2 = tr->getNewLabel();
+    Label start = tr->getNewLabel();
+    Label end = tr->getNewLabel();
 
     Label old_break = current_break_label;
-    current_break_label = L2;
+    Label old_cont = current_cont_label;
+    current_break_label = end;
 
-    tr->genMarkLabel(L1);
+    tr->genMarkLabel(start);
     s->condition->accept(this);
-    tr->genJumpOnZero(L2, s->condition->ATTR(val));
+    tr->genJumpOnZero(end, s->condition->ATTR(val));
 
     s->loop_body->accept(this);
-    tr->genJump(L1);
+    tr->genJump(start);
 
-    tr->genMarkLabel(L2);
+    tr->genMarkLabel(end);
 
     current_break_label = old_break;
+    current_cont_label = old_cont;
 }
+
+
+void Translation::visit(ast::ForStmt *s) {
+    Label update = tr->getNewLabel();
+    Label start = tr->getNewLabel();
+    Label end = tr->getNewLabel();
+
+    Label old_break = current_break_label;
+    Label old_cont = current_cont_label;
+    current_break_label = end;
+    current_cont_label = update;
+
+    s->init->accept(this);
+
+    tr->genMarkLabel(start);
+    s->condition->accept(this);
+    tr->genJumpOnZero(end, s->condition->ATTR(val));
+
+    s->loop_body->accept(this);
+
+    tr->genMarkLabel(update);
+    s->update->accept(this);
+    tr->genJump(start);
+
+    tr->genMarkLabel(end);
+
+    current_break_label = old_break;
+    current_cont_label = old_cont;
+}
+
+void Translation::visit(ast::DoWhileStmt *s) {
+    Label start = tr->getNewLabel();
+    Label end = tr->getNewLabel();
+
+    Label old_break = current_break_label;
+    Label old_cont = current_cont_label;
+    current_break_label = end;
+    current_cont_label = start;
+
+    tr->genMarkLabel(start);
+    s->loop_body->accept(this);
+    s->condition->accept(this);
+    tr->genJumpOnZero(end, s->condition->ATTR(val));
+
+    tr->genJump(start);
+
+    tr->genMarkLabel(end);
+
+    current_break_label = old_break;
+    current_cont_label = old_cont;
+}
+
 
 /* Translating an ast::BreakStmt node.
  */
-void Translation::visit(ast::BreakStmt *s) { tr->genJump(current_break_label); }
+void Translation::visit(ast::BreakStmt *s) { 
+
+    tr->genJump(current_break_label);
+    
+    
+}
+
+/* Translating an ast::ContStmt node.
+ */
+void Translation::visit(ast::ContStmt *s) { tr->genJump(current_cont_label); }
 
 /* Translating an ast::CompStmt node.
  */

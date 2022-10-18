@@ -71,9 +71,18 @@ class SemPass2 : public ast::Visitor {
     virtual void visit(ast::IfStmt *);
     virtual void visit(ast::ReturnStmt *);
     virtual void visit(ast::WhileStmt *);
+    virtual void visit(ast::ForStmt *);
+    virtual void visit(ast::DoWhileStmt *);
+
+    virtual void visit(ast::BreakStmt *);
+    virtual void visit(ast::ContStmt *);
+
     // Visiting declarations
     virtual void visit(ast::FuncDefn *);
     virtual void visit(ast::Program *);
+
+    private:
+    int loop_depth = 0;
 };
 
 // recording the current return type
@@ -261,12 +270,56 @@ void SemPass2::visit(ast::CompStmt *c) {
  *   e     - the ast::WhileStmt node
  */
 void SemPass2::visit(ast::WhileStmt *s) {
+    
+    s->condition->accept(this);
+    if (!s->condition->ATTR(type)->equal(BaseType::Int)) {
+        issue(s->condition->getLocation(), new BadTestExprError());
+    }
+    loop_depth++;
+    s->loop_body->accept(this);
+    loop_depth--;
+}
+
+void SemPass2::visit(ast::ForStmt *s) {
+    
+    s->init->accept(this);
+    s->condition->accept(this);
+
+    if (!s->condition->ATTR(type)->equal(BaseType::Int)) {
+        issue(s->condition->getLocation(), new BadTestExprError());
+    }
+
+    s->update->accept(this);
+
+    loop_depth++;
+    s->loop_body->accept(this);
+    loop_depth--;
+}
+
+
+void SemPass2::visit(ast::DoWhileStmt *s) {
+    
+    loop_depth++;
+    s->loop_body->accept(this);
+    loop_depth--;
+
     s->condition->accept(this);
     if (!s->condition->ATTR(type)->equal(BaseType::Int)) {
         issue(s->condition->getLocation(), new BadTestExprError());
     }
 
-    s->loop_body->accept(this);
+}
+
+void SemPass2::visit(ast::BreakStmt *s) {
+    if (loop_depth == 0) {
+        issue(s->getLocation(), new SyntaxError("break outside loop"));
+    }
+}
+
+void SemPass2::visit(ast::ContStmt *s) {
+    if (loop_depth == 0) {
+        issue(s->getLocation(), new SyntaxError("continue outside loop"));
+    }
 }
 
 /* Visits an ast::ReturnStmt node.

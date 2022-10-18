@@ -74,3 +74,50 @@ void BreakStmt::dumpTo(std::ostream &os) {
     newLine(os);
     decIndent(os);
 }
+
+
+ContStmt::ContStmt(Location *l) { setBasicInfo(CONT_STMT, l); }
+
+void ContStmt::accept(Visitor *v) { v->visit(this); }
+
+void ContStmt::dumpTo(std::ostream &os) {
+    ASTNode::dumpTo(os);
+    newLine(os);
+    decIndent(os);
+}
+
+
+ForStmt::ForStmt(Statement *init, Expr *cond, Expr *update, Statement *loop_body,
+            Location *l): init(init), condition(cond), update(update), loop_body(loop_body) {
+    setBasicInfo(FOR_STMT, l);
+            }
+
+void ForStmt::accept(Visitor *v) { v->visit(this); }
+
+void ForStmt::dumpTo(std::ostream &os) {
+    ASTNode::dumpTo(os);
+    newLine(os);
+    os << init;
+    newLine(os);
+    os << condition;
+    newLine(os);
+    os << update;
+    newLine(os);
+    os << loop_body << ")";
+    decIndent(os);
+}
+
+DoWhileStmt::DoWhileStmt(Statement *loop_body, Expr *cond, Location *l): loop_body(loop_body),condition(cond) {
+    setBasicInfo(DO_WHILE_STMT, l);
+}
+
+void DoWhileStmt::accept(Visitor *v) { v->visit(this); }
+
+void DoWhileStmt::dumpTo(std::ostream &os) {
+    ASTNode::dumpTo(os);
+    newLine(os);
+    os << loop_body;
+    newLine(os);
+    os << condition << ")";
+    decIndent(os);
+}

@@ -33,7 +33,11 @@ class Translation : public ast::Visitor {
 
     virtual void visit(ast::VarDecl *);
     virtual void visit(ast::WhileStmt *);
+    virtual void visit(ast::ForStmt *);
+    virtual void visit(ast::DoWhileStmt *);
+
     virtual void visit(ast::BreakStmt *);
+    virtual void visit(ast::ContStmt *);
 
     // constants
     virtual void visit(ast::IntConst *);
@@ -76,7 +80,7 @@ class Translation : public ast::Visitor {
   private:
     tac::TransHelper *tr;
     tac::Label current_break_label;
-    // TODO: label for continue
+    tac::Label current_cont_label;
 };
 } // namespace mind
 

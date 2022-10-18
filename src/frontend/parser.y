@@ -59,6 +59,7 @@ void scan_end();
    WHILE     "while"
    FOR       "for"
    BREAK     "break"
+   CONTINUE  "continue"
    EQU       "=="
    NEQ       "!="
    AND       "&&" 
@@ -95,8 +96,8 @@ void scan_end();
 %nterm <mind::ast::Program*>   Program FoDList
 %nterm <mind::ast::FuncDefn*>  FuncDefn
 %nterm <mind::ast::Type*>      Type
-%nterm <mind::ast::Statement*> Stmt ReturnStmt ExprStmt IfStmt CompStmt WhileStmt VarDecl
-%nterm <mind::ast::Expr*>      Expr
+%nterm <mind::ast::Statement*> Stmt ReturnStmt ExprStmt IfStmt CompStmt WhileStmt VarDecl ForStmt DoWhileStmt OptExprStmt
+%nterm <mind::ast::Expr*>      Expr OptionalExpr
 %nterm <mind::ast::Lvalue*>    Lvalue
 
 /*   SUBSECTION 2.2: associativeness & precedences */
@@ -162,10 +163,14 @@ Stmt        :  ReturnStmt  {$$ = $1;}
             |  ExprStmt    {$$ = $1;}
             |  IfStmt      {$$ = $1;}
             |  WhileStmt   {$$ = $1;}
+            |  ForStmt     {$$ = $1;}
+            |  DoWhileStmt {$$ = $1;}
             |  CompStmt    {$$ = $1;}
-            |  VarDecl {$$ = $1;}
+            |  VarDecl     {$$ = $1;}
             |  "break" ";"  
                 {$$ = new ast::BreakStmt(POS(@1));}
+            |  "continue" ";"
+                {$$ = new ast::ContStmt(POS(@1));}
             |  ";"
                 {$$ = new ast::EmptyStmt(POS(@1));}
             ;
@@ -174,6 +179,21 @@ CompStmt    : "{" StmtList "}"
             ;
 WhileStmt   : "while" "(" Expr ")" Stmt
                 { $$ = new ast::WhileStmt($3, $5, POS(@1)); }
+            ;
+DoWhileStmt : "do" Stmt "while" "(" Expr ")" ";"
+                { $$ = new ast::DoWhileStmt($2, $5, POS(@1)); }
+            ;
+ForStmt     : "for" "(" VarDecl OptionalExpr ";" OptionalExpr ")" Stmt
+                { $$ = new ast::ForStmt($3, $4, $6, $8, POS(@1)); }
+            | "for" "(" OptExprStmt OptionalExpr ";" OptionalExpr ")" Stmt
+                { $$ = new ast::ForStmt($3, $4, $6, $8, POS(@1)); }
+OptionalExpr: /* empty */
+                { $$ = new ast::IntConst(1, POS(@0)); }
+            | Expr
+                { $$ = $1; }
+            ;
+OptExprStmt : OptionalExpr ";"
+                { $$ = new ast::ExprStmt($1, POS(@1)); }
             ;
 IfStmt      : "if" "(" Expr ")" Stmt %prec "then"
                 { $$ = new ast::IfStmt($3, $5, new ast::EmptyStmt(POS(@5)), POS(@1)); }
@@ -193,7 +213,7 @@ VarDecl     : Type IDENTIFIER ";"
                 { $$ = new ast::VarDecl($2, $1, $4, POS(@1)); }
             ;
 Expr        : ICONST
-                { $$ = new ast::IntConst($1, POS(@1)); }    
+                { $$ = new ast::IntConst($1, POS(@1)); }
             | Lvalue
                 { $$ = new ast::LvalueExpr($1, POS(@1)); }        
             | "(" Expr ")"

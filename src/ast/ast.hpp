@@ -37,6 +37,7 @@ class ASTNode {
         BIT_NOT_EXPR,
         BOOL_TYPE,
         BREAK_STMT,
+        CONT_STMT,
         CALL_EXPR,
         COMP_STMT,
         DIV_EXPR,
@@ -65,6 +66,8 @@ class ASTNode {
         VAR_DECL,
         VAR_REF,
         WHILE_STMT,
+        FOR_STMT,
+        DO_WHILE_STMT,
         FOD,
     } NodeType;
 
@@ -305,6 +308,38 @@ class WhileStmt : public Statement {
     Expr *condition;
     Statement *loop_body;
 };
+
+class ForStmt : public Statement {
+  public:
+    ForStmt(Statement *init, Expr *cond, Expr *update, Statement *loop_body,
+            Location *l);
+
+    virtual void accept(Visitor *);
+    virtual void dumpTo(std::ostream &);
+
+  public:
+    Statement *init; // VarDecl or ExprStmt
+    Expr *condition;
+    Expr *update;
+    Statement *loop_body;
+
+    scope::Scope *ATTR(scope);
+};
+
+
+class DoWhileStmt : public Statement {
+  public:
+    DoWhileStmt(Statement *loop_body, Expr *cond, Location *l);
+
+    virtual void accept(Visitor *);
+    virtual void dumpTo(std::ostream &);
+
+  public:
+    Statement *loop_body;
+    Expr *condition;
+};
+
+
 /* Node representing an comp statement.
  *
  * SERIALIZED FORM:
