@@ -117,15 +117,21 @@ void Translation::visit(ast::AssignExpr *s) {
 
     s->left->accept(this);
 
-    if (s->left->ATTR(sym)->isGlobalVar()) {
+    ast::VarRef * ref;
 
-        Temp addr = tr->genLoadSymbol(s->left->ATTR(sym));
-        tr->genStore(s->e->ATTR(val), addr, 0);
-    } else {
-        tr->genAssign(s->left->ATTR(sym)->getTemp(), s->e->ATTR(val));
+    switch (s->left->ATTR(lv_kind)) {
+    case ast::Lvalue::SIMPLE_VAR:
+        ref = dynamic_cast<ast::VarRef *>(s->left);
+        mind_assert(ref);
+        tr->genAssign(ref->ATTR(sym)->getTemp(), s->e->ATTR(val));
+        break;
+    case ast::Lvalue::MEM_VAR:   // load address
+        tr->genStore(s->e->ATTR(val), s->left->ATTR(addr), 0);
+        break;
+    default:
+        mind_assert(false); // impossible
     }
-    
-
+  
     // s->ATTR(val) = s->left->ATTR(sym)->getTemp();
     s->ATTR(val) = s->e->ATTR(val);
 
@@ -421,23 +427,21 @@ void Translation::visit(ast::BitNotExpr *e) {
 void Translation::visit(ast::LvalueExpr *e) {
     e->lvalue->accept(this);
 
-    symb::Variable *var = dynamic_cast<symb::Variable *>(e->lvalue->ATTR(sym));
-    if (!var) {
-        abort();
+    ast::VarRef *ref;
+
+    switch (e->lvalue->ATTR(lv_kind)) {
+    case ast::Lvalue::SIMPLE_VAR:
+        ref = dynamic_cast<ast::VarRef *>(e->lvalue);
+        mind_assert(ref);
+        e->ATTR(val) =ref->ATTR(sym)->getTemp();
+        break;
+    case ast::Lvalue::MEM_VAR:   // load address
+        e->ATTR(val) = tr->genLoad(e->lvalue->ATTR(addr), 0);
+        break;
+    default:
+        mind_assert(false); // impossible
     }
-
-    if (var->isGlobalVar()) {
-        Temp var_addr = tr->genLoadSymbol(var);
-
-        e->ATTR(val) = tr->genLoad(var_addr, 0);
-        
-    } else {
-        e->ATTR(val) = e->lvalue->ATTR(sym)->getTemp();
-    }
-
-    
-
-    
+  
 
 }
 
@@ -448,25 +452,72 @@ void Translation::visit(ast::LvalueExpr *e) {
  * variables
  */
 void Translation::visit(ast::VarRef *ref) {
+    symb::Variable *var;
+
     switch (ref->ATTR(lv_kind)) {
     case ast::Lvalue::SIMPLE_VAR:
         // nothing to do
         break;
-
+    case ast::Lvalue::MEM_VAR:   // load address
+        var = dynamic_cast<symb::Variable *>(ref->ATTR(sym));
+        mind_assert(var);
+        if(var->isGlobalVar()){
+            ref->ATTR(addr) = tr->genLoadSymbol(var);
+        }else{
+            ref->ATTR(addr) = var->getTemp();
+        }
+        
+        break;
     default:
         mind_assert(false); // impossible
     }
     // actually it is so simple :-)
 }
 
+void Translation::visit(ast::ArrayRef *ref) {
+    ref->arr_base->accept(this); // set ATTR(addr)
+    ref->index->accept(this); // set ATTR(val)
+
+    // get element size
+    int elem_size = ref->ATTR(type)->getSize();
+
+    // compute offset
+    ref->ATTR(addr) = tr->genAdd(ref->arr_base->ATTR(addr),
+                                 tr->genMul(ref->index->ATTR(val),
+                                            tr->genLoadImm4(elem_size)));
+
+
+}
+
+
+
+
 /* Translating an ast::VarDecl node.
  */
 void Translation::visit(ast::VarDecl *decl) {
-    decl->ATTR(sym)->attachTemp(tr->getNewTempI4());
-    if(decl->init){
-        decl->init->accept(this);
-        tr->genAssign(decl->ATTR(sym)->getTemp(), decl->init->ATTR(val));
+
+    Variable *var = dynamic_cast<Variable *>(decl->ATTR(sym));
+    mind_assert(var);
+
+    if(var->isGlobalVar()) {
+        // TODO: riscv_md do this now
+        // global variable
+        // tr->genGlobalVar(var);
+    } else {
+        // local variable
+        if (var->getType()->equal(BaseType::Int)){
+            var->attachTemp(tr->getNewTempI4());
+            if(decl->init){
+                decl->init->accept(this);
+                tr->genAssign(decl->ATTR(sym)->getTemp(), decl->init->ATTR(val));
+            }
+        }else{
+            var->attachTemp(tr->genAlloc(var->getType()->getSize()));
+        } 
+        
     }
+
+    
 
 }
 

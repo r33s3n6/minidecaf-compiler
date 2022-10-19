@@ -271,6 +271,9 @@ void RiscvDesc::emitTac(Tac *t) {
     case Tac::LOAD_SYMBOL:
         emitLoadSymbolTac(t);
         break;
+    case Tac::ALLOC:
+        emitAllocTac(t);
+        break;
     case Tac::PUSH:
         emitPushTac(t);
         break;
@@ -403,6 +406,25 @@ void RiscvDesc::emitStoreTac(Tac *t) {
     int r1 = getRegForRead(t->op1.var, r0, t->LiveOut);
     addInstr(RiscvInstr::SW, _reg[r0], _reg[r1], NULL, t->op2.ival, EMPTY_STR,
              {});
+}
+
+/* Translates an Alloc TAC into Riscv instructions.
+ *
+ * PARAMETERS:
+ *   t     - the Alloc TAC
+ */
+void RiscvDesc::emitAllocTac(Tac *t) {
+    // eliminates useless assignments
+    if (!t->LiveOut->contains(t->op0.var)) {
+        addInstr(RiscvInstr::COMMENT, NULL, NULL, NULL, 0, EMPTY_STR, "useless code");
+        return;
+    }
+        
+    int r0 = getRegForWrite(t->op0.var, 0, 0, t->LiveOut);
+
+    std::ostringstream cmt;
+    cmt << "get address ( fp " << t->op2.ival << " ) size: " << t->op1.ival;
+    addInstr(RiscvInstr::ADDI, _reg[r0], _reg[RiscvReg::FP], NULL, t->op2.ival, {}, cmt.str());
 }
 
 void RiscvDesc::emitPushTac(Tac *t) {
@@ -608,10 +630,28 @@ void RiscvDesc::emitFuncty(Functy f) {
 
     _param_counter = 0;
 
-    _frame = new RiscvStackFrameManager(-3 * WORD_SIZE);
+    
     FlowGraph *g = FlowGraph::makeGraph(f);
     g->simplify();        // simple optimization
     g->analyzeLiveness(); // computes LiveOut set of the basic blocks
+
+    
+    
+    _frame = new RiscvStackFrameManager(-3 * WORD_SIZE);
+
+    // find all Alloc
+    for (FlowGraph::iterator it = g->begin(); it != g->end(); ++it) {
+        BasicBlock *b = *it;
+        
+        tac::Tac* tacs = b->tac_chain;
+        while (tacs != NULL) {
+            if (tacs->op_code == tac::Tac::ALLOC) {
+                tacs->op2.ival = _frame->alloc(tacs->op1.ival);
+            }
+            tacs = tacs->next;
+        }
+        
+    }
 
     for (FlowGraph::iterator it = g->begin(); it != g->end(); ++it) {
         // all variables shared between basic blocks should be reserved
@@ -644,8 +684,12 @@ void RiscvDesc::emitFuncty(Functy f) {
     }
 
     mind_assert(!f->entry->str_form.empty()); // this assertion should hold for every Functy
-    // outputs the header of a function
-    emitProlog(f->entry, _frame->getStackFrameSize());
+    
+
+    std::ostream* old_stream = _result;
+    std::ostringstream oss;
+    _result = &oss; // emit trace to oss first (we need to get actual stack size)
+
     // chains up the assembly code of every basic block and output.
     //
     // ``A trace is a sequence of statements that could be consecutively
@@ -654,6 +698,17 @@ void RiscvDesc::emitFuncty(Functy f) {
     //           -- Modern Compiler Implementation in Java (the ``Tiger Book'')
     for (FlowGraph::iterator it = g->begin(); it != g->end(); ++it)
         emitTrace(*it, g);
+
+    _result = old_stream;
+
+    // outputs the header of a function
+    emitProlog(f->entry, _frame->getStackFrameSize());
+
+    // outputs the assembly code of the function
+    *_result << oss.str();
+
+
+
 }
 
 /* Outputs the leading code of a function.

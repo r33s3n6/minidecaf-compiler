@@ -91,16 +91,17 @@ void scan_end();
 %token <std::string> IDENTIFIER "identifier"
 %token <int>         ICONST     "iconst"
 
-%nterm <mind::ast::StmtList*>  StmtList
-%nterm <mind::ast::VarList*>   FormalList NonNullFormalList
-%nterm <mind::ast::Program*>   Program FoDList
-%nterm <mind::ast::FuncDefn*>  FuncDefn
-%nterm <mind::ast::ExprList*>  ExprList NonNullExprList
-%nterm <mind::ast::Type*>      Type
-%nterm <mind::ast::Statement*> Stmt ReturnStmt ExprStmt IfStmt CompStmt WhileStmt VarDecl ForStmt DoWhileStmt OptExprStmt
-%nterm <mind::ast::Expr*>      Expr OptionalExpr 
-%nterm <mind::ast::Lvalue*>    Lvalue
-%nterm <mind::ast::ASTNode*>   FuncOrDecl
+%nterm <mind::ast::StmtList*>   StmtList
+%nterm <mind::ast::VarList*>    FormalList NonNullFormalList
+%nterm <mind::ast::Program*>    Program FoDList
+%nterm <mind::ast::FuncDefn*>   FuncDefn
+%nterm <mind::ast::ExprList*>   ExprList NonNullExprList
+%nterm <mind::ast::Type*>       Type
+%nterm <mind::ast::Statement*>  Stmt ReturnStmt ExprStmt IfStmt CompStmt WhileStmt VarDecl ForStmt DoWhileStmt OptExprStmt
+%nterm <mind::ast::Expr*>       Expr OptionalExpr 
+%nterm <mind::ast::Lvalue*>     Lvalue
+%nterm <mind::ast::ASTNode*>    FuncOrDecl
+%nterm <mind::ast::DimList*>    DimList
 
 /*   SUBSECTION 2.2: associativeness & precedences */
 %right    "then" "else"
@@ -233,6 +234,13 @@ VarDecl     : Type IDENTIFIER ";"
                 { $$ = new ast::VarDecl($2, $1, POS(@1)); }
             | Type IDENTIFIER "=" Expr ";"
                 { $$ = new ast::VarDecl($2, $1, $4, POS(@1)); }
+            | Type IDENTIFIER DimList ";"
+                { $$ = new ast::VarDecl($2, new ast::ArrayType($1, $3, POS(@3)),  POS(@1)); }
+            ;
+DimList     : "[" ICONST "]"
+                { $$ = new util::List<int>(); $$->append($2); }
+            | DimList "[" ICONST "]"
+                { $$ = $1; $1->append($3); }
             ;
 Expr        : ICONST
                 { $$ = new ast::IntConst($1, POS(@1)); }
@@ -296,7 +304,8 @@ NonNullExprList
 
 Lvalue      : IDENTIFIER
                 { $$ = new ast::VarRef($1, POS(@1)); }
-            ;
+            | Lvalue "[" Expr "]"
+                { $$ = new ast::ArrayRef($1, $3, POS(@1)); }
 
 %%
 

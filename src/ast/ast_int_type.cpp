@@ -37,3 +37,20 @@ void IntType::dumpTo(std::ostream &os) {
     os << ")";
     decIndent(os);
 }
+
+ArrayType::ArrayType(Type *elem_type, DimList* dims, Location *l) : elem_type(elem_type), dims(dims) {
+    setBasicInfo(ARRAY_TYPE, l);
+}
+
+
+void ArrayType::accept(Visitor *v) { v->visit(this); }
+
+void ArrayType::dumpTo(std::ostream &os) {
+    ASTNode::dumpTo(os);
+    os << " " << elem_type << " ";
+    for (auto dim : *dims) {
+        os << dim << ", ";
+    }
+    decIndent(os);
+}
+

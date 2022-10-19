@@ -30,6 +30,7 @@ VarRef::VarRef(std::string n, Location *l) {
     ATTR(sym) = NULL;
 }
 
+
 /* Visits the current node.
  *
  * PARAMETERS:
@@ -50,5 +51,25 @@ void VarRef::dumpTo(std::ostream &os) {
     // os << owner << ")";
     // else
     // os << "())";
+    decIndent(os);
+}
+
+
+ArrayRef::ArrayRef(Lvalue* arr_base, Expr * index, Location *l) {
+
+    setBasicInfo(ARRAY_REF, l);
+
+    this->arr_base = arr_base;
+    this->index = index;
+    ATTR(lv_kind) = MEM_VAR;
+    
+}
+
+void ArrayRef::accept(Visitor *v) { v->visit(this); }
+
+void ArrayRef::dumpTo(std::ostream &os) {
+    ASTNode::dumpTo(os);
+    os << " some_var " << index;
+    newLine(os);
     decIndent(os);
 }

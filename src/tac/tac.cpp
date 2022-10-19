@@ -511,6 +511,16 @@ Tac *Tac::Store( Temp src, Temp base_addr, int offset) {
 }
 
 
+Tac *Tac::Alloc(Temp dest, int size) {
+    REQUIRE_I4(dest);
+
+    Tac *t = allocateNewTac(Tac::ALLOC);
+    t->op0.var = dest;
+    t->op1.ival = size;
+
+    return t;
+}
+
 /* Creates a Jump tac.
  *
  * NOTE:
@@ -808,6 +818,10 @@ void Tac::dump(std::ostream &os) {
     
     case STORE:
         os << "    " << op0.var << " -> *(" << op1.var << " + " << op2.ival << ")";
+        break;
+    
+    case ALLOC:
+        os << "    " << op0.var << " <- alloc(" << op1.ival << ")";
         break;
 
     default:

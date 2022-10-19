@@ -33,14 +33,19 @@ class RiscvStackFrameManager {
     int getSlotToWrite(tac::Temp v, util::Set<tac::Temp> *liveness);
     // gets the size of the stack frame
     int getStackFrameSize(void);
+    // alloc space for array
+    int alloc(int size);
 
   private:
     int reserved_size; // reserved area size
     int size;          // current stackframe size
     int max_size;      // maximum stackframe size
     int start_offset;  // start offset
+    int alloc_size;    // allocated size (for array)
     int capacity;      // how many slots
     tac::Temp *slots;  // dynamic slots
+
+    // std::vector
 
     // computes the offset of a specified slot
     int offsetOf(int slot_num);

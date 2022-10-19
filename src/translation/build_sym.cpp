@@ -80,8 +80,10 @@ class SemPass1 : public ast::Visitor {
 
     // lvalues
     virtual void visit(ast::VarRef *);
+    virtual void visit(ast::ArrayRef *);
     // visiting types
     virtual void visit(ast::IntType *);
+    virtual void visit(ast::ArrayType *);
 };
 
 /* Visiting an ast::Program node.
@@ -309,6 +311,13 @@ void SemPass1::visit(ast::VarRef * v){
 
 }
 
+void SemPass1::visit(ast::ArrayRef * v){
+
+    v->arr_base->accept(this);
+    v->index->accept(this);
+
+}
+
 /* Visiting an ast::VarDecl node.
  *
  * NOTE:
@@ -337,6 +346,7 @@ void SemPass1::visit(ast::VarDecl *vdecl) {
     Variable *v = new Variable(vdecl->name, t, vdecl->getLocation());
     scopes->declare(v);
 
+
     // TODO: 4. Special processing for global variables
     if (scopes->top()->getKind() == Scope::GLOBAL){
 
@@ -348,10 +358,6 @@ void SemPass1::visit(ast::VarDecl *vdecl) {
         if (init){
             v->setGlobalInit(init->value);
         }
-        
-        // GlobalScope *gscope = dynamic_cast<GlobalScope *>(scopes->top());
-        // gscope->
-        // TODO:
     }
 
     // Tag the symbol to `vdecl->ATTR(sym)`
@@ -369,6 +375,19 @@ void SemPass1::visit(ast::VarDecl *vdecl) {
  *   itype - the ast::IntType node to visit
  */
 void SemPass1::visit(ast::IntType *itype) { itype->ATTR(type) = BaseType::Int; }
+
+void SemPass1::visit(ast::ArrayType *atype) {
+
+    Type* base_type = BaseType::Int;
+    for (auto it = atype->dims->rbegin(); it != atype->dims->rend(); ++it){
+        if(*it == 0){
+            issue(atype->getLocation(), new SyntaxError("array dimension must be positive"));
+            return;
+        }
+        base_type = new ArrayType(base_type, *it);
+    }
+    atype->ATTR(type) = base_type;
+}
 
 /* Builds the symbol tables for the Mind compiler.
  *

@@ -98,8 +98,8 @@ int RiscvStackFrameManager::getSlotToWrite(Temp v, Set<Temp> *liveness) {
 
     if (i >= 0) {
         // Note: modified: seems useless
-        // v->offset = offsetOf(i);
-        // v->is_offset_fixed = true;
+        v->offset = offsetOf(i);
+        v->is_offset_fixed = true;
         return i;
     }
 
@@ -134,7 +134,7 @@ int RiscvStackFrameManager::getSlotToWrite(Temp v, Set<Temp> *liveness) {
  *   (excluding the $fp and $ra area)
  */
 int RiscvStackFrameManager::getStackFrameSize(void) {
-    return (max_size * WORD_SIZE);
+    return (alloc_size + max_size * WORD_SIZE);
 }
 
 /* Computes the offset of a specified slot.
@@ -142,10 +142,10 @@ int RiscvStackFrameManager::getStackFrameSize(void) {
  * PARAMETERS:
  *   slot_num - slot number
  * RETURNS:
- *   the memmory offset of this slot (from the beginning of the stack-frame)
+ *   the memory offset of this slot (from the beginning of the stack-frame)
  */
 int RiscvStackFrameManager::offsetOf(int slot_num) {
-    return (start_offset - slot_num * WORD_SIZE);
+    return (start_offset - alloc_size - slot_num * WORD_SIZE);
 }
 
 /* Ensures the capacity of the underlying buffer.
@@ -157,4 +157,9 @@ void RiscvStackFrameManager::ensureCapacity(void) {
         std::copy(slots, slots + size, new_slots);
         slots = new_slots;
     }
+}
+
+int RiscvStackFrameManager::alloc(int size){
+    alloc_size += size;
+    return start_offset - alloc_size + 4;
 }
