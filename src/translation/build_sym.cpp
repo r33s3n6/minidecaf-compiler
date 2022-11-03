@@ -132,33 +132,88 @@ void SemPass1::visit(ast::FuncDefn *fdef) {
     // 2,3). if DeclConflictError occurs, we don't put the symbol into the
     // symbol table
     Symbol *sym = scopes->lookup(fdef->name, fdef->getLocation(), false);
-    if (sym){
-        issue(fdef->getLocation(), new DeclConflictError(fdef->name, sym));
-        return;
+
+    // if there's no symbol, create one. otherwise:
+    // 1. if we are declaring a function, or defining a function and symbol is weak, we check if all types compatible
+    // 2. if we are defining a function and symbol is weak, add statements to it.
+    // 3. if we are defining a function and symbol is strong, we have a redefinition
+    Function *f;
+    if (!sym) {
+        f = new Function(fdef->name, t, fdef->getLocation());
+        scopes->declare(f);
+
+        // opens function scope
+        scopes->open(f->getAssociatedScope());
+
+        // adds the parameters
+        for (ast::VarList::iterator it = fdef->formals->begin();
+             it != fdef->formals->end(); ++it) {
+            (*it)->accept(this);
+            f->appendParameter((*it)->ATTR(sym));
+        }
+        if (!fdef->forward_decl) {
+            // adds the local variables
+            for (auto it = fdef->stmts->begin(); it != fdef->stmts->end(); ++it)
+                (*it)->accept(this);
+        }else{
+            f->weak = true;
+        }
+
+
+        // closes function scope
+        scopes->close();
+    }else{
+        f = dynamic_cast<Function*>(sym);
+        // check if there's conflict
+        if(fdef->forward_decl || (!fdef->forward_decl && sym->weak)) {
+            scopes->open(new LocalScope); // temporary scope
+            for (ast::VarList::iterator it = fdef->formals->begin();
+                 it != fdef->formals->end(); ++it) {
+                (*it)->accept(this);
+            }
+            scopes->close();
+
+            if (!f) {
+                issue(fdef->getLocation(), new NotMethodError(sym));
+                return;
+            }
+            if (!f->getResultType()->equal(t)) {
+                issue(fdef->getLocation(), new DeclConflictError(fdef->name, sym));
+                return;
+            }
+            auto arg_list = f->getType()->getArgList();
+            if (arg_list->length() != fdef->formals->length()) {
+                issue(fdef->getLocation(), new DeclConflictError(fdef->name, sym));
+                return;
+            }
+            auto arg_it = arg_list->begin();
+            for (auto it = fdef->formals->begin();
+                 it != fdef->formals->end(); ++it, ++arg_it) {
+                if (!(*arg_it)->equal((*it)->type->ATTR(type))) {
+                    issue(fdef->getLocation(), new DeclConflictError(fdef->name, sym));
+                    return;
+                }
+            }
+        } else {
+            issue(fdef->getLocation(), new DeclConflictError(fdef->name, sym));
+            return;
+        }
+        
+        // real definition
+        if(!fdef->forward_decl) {
+            scopes->open(f->getAssociatedScope());
+            // adds the local variables
+            for (auto it = fdef->stmts->begin(); it != fdef->stmts->end(); ++it)
+                (*it)->accept(this);
+            scopes->close();
+            f->weak = false;
+        }
     }
-    
-    Function *f = new Function(fdef->name, t, fdef->getLocation());
+
+
     fdef->ATTR(sym) = f;
-    
 
-    scopes->declare(f);
 
-    // opens function scope
-    scopes->open(f->getAssociatedScope());
-
-    // adds the parameters
-    for (ast::VarList::iterator it = fdef->formals->begin();
-         it != fdef->formals->end(); ++it) {
-        (*it)->accept(this);
-        f->appendParameter((*it)->ATTR(sym));
-    }
-
-    // adds the local variables
-    for (auto it = fdef->stmts->begin(); it != fdef->stmts->end(); ++it)
-        (*it)->accept(this);
-
-    // closes function scope
-    scopes->close();
 }
 
 void SemPass1::visit(ast::CallExpr *e){

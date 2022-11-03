@@ -521,3 +521,13 @@ void TransHelper::genMemo(const char *comment) { chainUp(Tac::Memo(comment)); }
  *   the Piece list (representing as a single linked list)
  */
 Piece *TransHelper::getPiece(void) { return head.next; }
+
+Temp TransHelper::genCalleeSave() {
+    Temp c = getNewTempI4();
+    chainUp(Tac::CalleeSave(c));
+    return c;
+}
+
+void TransHelper::genCalleeRestore(Temp src) {
+    chainUp(Tac::CalleeRestore(src));
+}

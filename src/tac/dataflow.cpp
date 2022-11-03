@@ -75,6 +75,7 @@ void BasicBlock::computeDefAndLiveUse(void) {
             break;
 
         case Tac::POP:
+        case Tac::CALLEE_SAVE:
         case Tac::LOAD_IMM4:
         case Tac::LOAD_SYMBOL:
         case Tac::CALL:
@@ -83,6 +84,7 @@ void BasicBlock::computeDefAndLiveUse(void) {
             break;
 
         case Tac::PUSH:
+        case Tac::CALLEE_RESTORE:
             updateLU(t->op0.var);
             break;
 
@@ -232,6 +234,7 @@ void BasicBlock::analyzeLiveness(void) {
             break;
 
         case Tac::POP:
+        case Tac::CALLEE_SAVE:
         case Tac::CALL:
         case Tac::LOAD_IMM4:
         case Tac::LOAD_SYMBOL:
@@ -241,6 +244,7 @@ void BasicBlock::analyzeLiveness(void) {
             break;
 
         case Tac::PUSH:
+        case Tac::CALLEE_RESTORE:
             t->LiveOut->add(t_next->op0.var);
             break;
 

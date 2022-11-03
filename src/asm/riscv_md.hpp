@@ -63,10 +63,15 @@ struct RiscvReg {
     const char *name; // register name
     tac::Temp var;    // associated variable
     bool dirty;       // whether it is out of sychronized with the memory
-    bool general;     // whether it is a generl-purpose register
+    bool general;     // whether it is a general-purpose register
+    bool caller_saved; // whether it is a caller-saved register
+    bool callee_saved; // whether it is a callee-saved register
 
     // two constructors for convenience
-    RiscvReg(const char *reg_name, bool is_general);
+    RiscvReg(const char *reg_name, bool is_general, bool caller_saved,
+             bool callee_saved)
+        : name(reg_name), var(nullptr), dirty(false), general(is_general),
+          caller_saved(caller_saved), callee_saved(callee_saved) {};
     RiscvReg() {}
 };
 
@@ -167,6 +172,8 @@ class RiscvDesc : public MachineDesc {
     int _label_counter;
 
     int _param_counter = 0;
+    int _callee_param_counter = 0;
+    int _callee_saved_counter = 0;
     
     // allocates a new label
     const char *getNewLabel(void);
@@ -181,6 +188,8 @@ class RiscvDesc : public MachineDesc {
     void emitLoadTac(tac::Tac *);
     void emitStoreTac(tac::Tac *);
     void emitAllocTac(tac::Tac *);
+    void emitCalleeSaveTac(tac::Tac *);
+    void emitCalleeRestoreTac(tac::Tac *);
 
     void emitPushTac(tac::Tac *t);
     void emitPopTac(tac::Tac *t);
@@ -214,6 +223,8 @@ class RiscvDesc : public MachineDesc {
     RiscvReg *_reg[RiscvReg::TOTAL_NUM]; // registers of a machine
     int _lastUsedReg;                    // which register was used last?
 
+    RiscvReg * callee_saved_regs[11];
+
     // acquires a register to read the value of a variable
     int getRegForRead(tac::Temp, int, LiveSet *);
     // acquires a register to write the value of a variable
@@ -222,6 +233,7 @@ class RiscvDesc : public MachineDesc {
     void spillReg(int, LiveSet *);
     // spills all dirty registers into memory (for control-flow change)
     void spillDirtyRegs(LiveSet *);
+    void spillCallerSavedDirtyRegs(LiveSet *live);
     // looks up a register holding the specified variable
     int lookupReg(tac::Temp);
     // selects a register to spill into memory
@@ -230,6 +242,8 @@ class RiscvDesc : public MachineDesc {
     /*** regs for riscv standard call ***/
     void passParamReg(tac::Tac *t, int cnt);
     void getParamReg(tac::Tac *t, int cnt);
+
+    
 
 };
 

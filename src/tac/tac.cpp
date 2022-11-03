@@ -639,6 +639,20 @@ Tac *Tac::Mark(Label label) {
 }
 
 
+Tac *Tac::CalleeSave(Temp dest) {
+    Tac *t = allocateNewTac(Tac::CALLEE_SAVE);
+    t->op0.var = dest;
+
+    return t;
+}
+
+Tac *Tac::CalleeRestore(Temp src) {
+    Tac *t = allocateNewTac(Tac::CALLEE_RESTORE);
+    t->op0.var = src;
+
+    return t;
+}
+
 
 /* Outputs a temporary variable.
  *
@@ -664,7 +678,7 @@ std::ostream &mind::operator<<(std::ostream &os, Label l) {
     if (l->str_form.empty())
         return (os << "__L" << l->id);
     else
-        return (os << "_" << (l->str_form));
+        return (os << (l->str_form));
 }
 
 /* Outputs a functy object.
@@ -822,6 +836,14 @@ void Tac::dump(std::ostream &os) {
     
     case ALLOC:
         os << "    " << op0.var << " <- alloc(" << op1.ival << ")";
+        break;
+    
+    case CALLEE_SAVE:
+        os << "    " << op0.var << " <- callee_save()";
+        break;
+
+    case CALLEE_RESTORE:
+        os << "    callee_restore(" << op0.var << ")";
         break;
 
     default:

@@ -82,6 +82,8 @@ class Translation : public ast::Visitor {
     tac::TransHelper *tr;
     tac::Label current_break_label;
     tac::Label current_cont_label;
+
+    tac::Temp callee_save_regs[11];
 };
 } // namespace mind
 

@@ -375,6 +375,9 @@ void SemPass2::visit(ast::ReturnStmt *s) {
  *   e     - the ast::FunDefn node
  */
 void SemPass2::visit(ast::FuncDefn *f) {
+    if (f->forward_decl) {
+        return; // do nothing
+    }
     ast::StmtList::iterator it;
 
     retType = f->ret_type->ATTR(type);

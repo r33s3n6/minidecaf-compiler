@@ -98,6 +98,8 @@ struct Tac {
         LOAD_SYMBOL,
         STORE,
         ALLOC,
+        CALLEE_SAVE,
+        CALLEE_RESTORE,
         MEMO
     } Kind;
 
@@ -156,6 +158,8 @@ struct Tac {
 
     static Tac *Mark(Label label);
     static Tac *Memo(const char *);
+    static Tac *CalleeSave(Temp dest);
+    static Tac *CalleeRestore(Temp src);
 
     // dumps a single tac node to some output stream
     void dump(std::ostream &);

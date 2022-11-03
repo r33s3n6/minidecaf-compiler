@@ -43,6 +43,9 @@ class Symbol {
     int mark;
     // offset of this symbol
     int offset;
+
+    bool weak = false;
+
     // Gets the name of this symbol
     virtual std::string getName(void);
     // Gets the type of this symbol

@@ -27,18 +27,6 @@ using namespace mind;
 #define EMPTY_STR std::string()
 #define WORD_SIZE 4
 
-/* Constructor of RiscvReg.
- *
- * PARAMETERS:
- *   reg_name   - name of this register
- *   is_general - whether this register is a general-purpose one
- */
-RiscvReg::RiscvReg(const char *reg_name, bool is_general) {
-    name = reg_name;
-    dirty = false;
-    var = NULL;
-    general = is_general;
-}
 
 /* Constructor of RiscvDesc.
  *
@@ -54,38 +42,52 @@ RiscvDesc::RiscvDesc(void) {
     // initializes the register vector
     // (we regard all general-purpose registers as caller-saved, which is
     // different from the Riscv specification)
-    _reg[RiscvReg::ZERO] = new RiscvReg("zero", false); // zero
-    _reg[RiscvReg::RA] = new RiscvReg("ra", false);     // return address
-    _reg[RiscvReg::SP] = new RiscvReg("sp", false);     // stack pointer
-    _reg[RiscvReg::GP] = new RiscvReg("gp", false);     // global pointer
-    _reg[RiscvReg::TP] = new RiscvReg("tp", false);     // thread pointer
-    _reg[RiscvReg::T0] = new RiscvReg("t0", true);
-    _reg[RiscvReg::T1] = new RiscvReg("t1", true);
-    _reg[RiscvReg::T2] = new RiscvReg("t2", true);
-    _reg[RiscvReg::T3] = new RiscvReg("t3", true);
-    _reg[RiscvReg::T4] = new RiscvReg("t4", true);
-    _reg[RiscvReg::T5] = new RiscvReg("t5", true);
-    _reg[RiscvReg::T6] = new RiscvReg("t6", true);
-    _reg[RiscvReg::FP] = new RiscvReg("fp", false); // frame pointer
-    _reg[RiscvReg::S1] = new RiscvReg("s1", true);
-    _reg[RiscvReg::S2] = new RiscvReg("s2", true);
-    _reg[RiscvReg::S3] = new RiscvReg("s3", true);
-    _reg[RiscvReg::S4] = new RiscvReg("s4", true);
-    _reg[RiscvReg::S5] = new RiscvReg("s5", true);
-    _reg[RiscvReg::S6] = new RiscvReg("s6", true);
-    _reg[RiscvReg::S7] = new RiscvReg("s7", true);
-    _reg[RiscvReg::S8] = new RiscvReg("s8", true);
-    _reg[RiscvReg::S9] = new RiscvReg("s9", true);
-    _reg[RiscvReg::S10] = new RiscvReg("s10", true);
-    _reg[RiscvReg::S11] = new RiscvReg("s11", true);
-    _reg[RiscvReg::A0] = new RiscvReg("a0", true); // argument, return value
-    _reg[RiscvReg::A1] = new RiscvReg("a1", true); // argument, return value
-    _reg[RiscvReg::A2] = new RiscvReg("a2", true); // argument
-    _reg[RiscvReg::A3] = new RiscvReg("a3", true); // argument
-    _reg[RiscvReg::A4] = new RiscvReg("a4", true); // argument
-    _reg[RiscvReg::A5] = new RiscvReg("a5", true); // argument
-    _reg[RiscvReg::A6] = new RiscvReg("a6", true); // argument
-    _reg[RiscvReg::A7] = new RiscvReg("a7", true); // argument
+    _reg[RiscvReg::ZERO] = new RiscvReg("zero", false, false, false); // zero
+    _reg[RiscvReg::RA]   = new RiscvReg("ra",   false, false, false); // return address (actually it is caller-saved, 
+    _reg[RiscvReg::SP]   = new RiscvReg("sp",   false, false, false); // stack pointer      but we already handle it in the frame manager)
+    _reg[RiscvReg::GP]   = new RiscvReg("gp",   false, false, false); // global pointer
+    _reg[RiscvReg::TP]   = new RiscvReg("tp",   false, false, false); // thread pointer
+    _reg[RiscvReg::T0]   = new RiscvReg("t0",   true,  true,  false);
+    _reg[RiscvReg::T1]   = new RiscvReg("t1",   true,  true,  false);
+    _reg[RiscvReg::T2]   = new RiscvReg("t2",   true,  true,  false);
+    _reg[RiscvReg::T3]   = new RiscvReg("t3",   true,  true,  false);
+    _reg[RiscvReg::T4]   = new RiscvReg("t4",   true,  true,  false);
+    _reg[RiscvReg::T5]   = new RiscvReg("t5",   true,  true,  false);
+    _reg[RiscvReg::T6]   = new RiscvReg("t6",   true,  true,  false); // t0-t6 are caller-saved
+    _reg[RiscvReg::FP]   = new RiscvReg("fp",   false, false, false); // frame pointer
+    _reg[RiscvReg::S1]   = new RiscvReg("s1",   true,  false, true ); 
+    _reg[RiscvReg::S2]   = new RiscvReg("s2",   true,  false, true );
+    _reg[RiscvReg::S3]   = new RiscvReg("s3",   true,  false, true );
+    _reg[RiscvReg::S4]   = new RiscvReg("s4",   true,  false, true );
+    _reg[RiscvReg::S5]   = new RiscvReg("s5",   true,  false, true );
+    _reg[RiscvReg::S6]   = new RiscvReg("s6",   true,  false, true );
+    _reg[RiscvReg::S7]   = new RiscvReg("s7",   true,  false, true );
+    _reg[RiscvReg::S8]   = new RiscvReg("s8",   true,  false, true );
+    _reg[RiscvReg::S9]   = new RiscvReg("s9",   true,  false, true );
+    _reg[RiscvReg::S10]  = new RiscvReg("s10",  true,  false, true );
+    _reg[RiscvReg::S11]  = new RiscvReg("s11",  true,  false, true ); // s1-s11 are callee-saved
+    _reg[RiscvReg::A0]   = new RiscvReg("a0",   true,  true,  false); // argument, return value
+    _reg[RiscvReg::A1]   = new RiscvReg("a1",   true,  true,  false); // argument, return value
+    _reg[RiscvReg::A2]   = new RiscvReg("a2",   true,  true,  false); // argument
+    _reg[RiscvReg::A3]   = new RiscvReg("a3",   true,  true,  false); // argument
+    _reg[RiscvReg::A4]   = new RiscvReg("a4",   true,  true,  false); // argument
+    _reg[RiscvReg::A5]   = new RiscvReg("a5",   true,  true,  false); // argument
+    _reg[RiscvReg::A6]   = new RiscvReg("a6",   true,  true,  false); // argument
+    _reg[RiscvReg::A7]   = new RiscvReg("a7",   true,  true,  false); // argument, a0-a7 are caller-saved
+
+    callee_saved_regs[0] = _reg[RiscvReg::S1];
+    callee_saved_regs[1] = _reg[RiscvReg::S2];
+    callee_saved_regs[2] = _reg[RiscvReg::S3];
+    callee_saved_regs[3] = _reg[RiscvReg::S4];
+    callee_saved_regs[4] = _reg[RiscvReg::S5];
+    callee_saved_regs[5] = _reg[RiscvReg::S6];
+    callee_saved_regs[6] = _reg[RiscvReg::S7];
+    callee_saved_regs[7] = _reg[RiscvReg::S8];
+    callee_saved_regs[8] = _reg[RiscvReg::S9];
+    callee_saved_regs[9] = _reg[RiscvReg::S10];
+    callee_saved_regs[10] = _reg[RiscvReg::S11];
+
+
 
     _lastUsedReg = 0;
     _label_counter = 0;
@@ -113,22 +115,28 @@ void RiscvDesc::emitPieces(scope::GlobalScope *gscope, Piece *ps,
 
     util::List<symb::Variable*> bss_vars;
     util::List<symb::Variable*> data_vars;
+    util::List<symb::Function*> weak_funcs;
 
     if (Option::getLevel() == Option::ASMGEN) {
         // program preamble
-        
- 
         for (auto it = gscope->begin(); it != gscope->end(); ++it) {
-            symb::Variable *sym = dynamic_cast<symb::Variable*>(*it);
-            if (!sym) continue;
-
-            if (sym->isGlobalVar()) {
-                if(sym->getGlobalInit() == 0){
-                    bss_vars.append(sym);
-                } else {
-                    data_vars.append(sym);
+            symb::Variable *var = dynamic_cast<symb::Variable*>(*it);
+            symb::Function *func = dynamic_cast<symb::Function*>(*it);
+            if (var) {
+                if (var->isGlobalVar()) {
+                    if(var->getGlobalInit() == 0){
+                        bss_vars.append(var);
+                    } else {
+                        data_vars.append(var);
+                    }
+                }
+            } else if (func) {
+                if (func->weak) {
+                    weak_funcs.append(func);
                 }
             }
+
+
         }
 
         // .data segment
@@ -157,6 +165,10 @@ void RiscvDesc::emitPieces(scope::GlobalScope *gscope, Piece *ps,
 
 
         emit(EMPTY_STR, ".text", NULL);
+        for(auto it = weak_funcs.begin(); it != weak_funcs.end(); ++it){
+            symb::Function *func = *it;
+            emit(EMPTY_STR, (".globl " + func->getName()).c_str(), NULL);
+        }
         emit(EMPTY_STR, ".globl main", NULL);
         emit(EMPTY_STR, ".align 2", NULL);
     }
@@ -237,6 +249,7 @@ RiscvInstr *RiscvDesc::prepareSingleChain(BasicBlock *b, FlowGraph *g) {
         addInstr(RiscvInstr::LW, _reg[RiscvReg::FP], _reg[RiscvReg::FP], NULL,
                  -8, EMPTY_STR, {});
         addInstr(RiscvInstr::RET, NULL, NULL, NULL, 0, EMPTY_STR, {});
+        _callee_saved_counter = 11;
         break;
 
     default:
@@ -337,11 +350,37 @@ void RiscvDesc::emitTac(Tac *t) {
         emitBinaryTac(RiscvInstr::_SLOR, t);
         break;
     
+    case Tac::CALLEE_SAVE:
+        emitCalleeSaveTac(t);
+        break;
+    case Tac::CALLEE_RESTORE:
+        emitCalleeRestoreTac(t);
+        break;
+    
 
     default:
         mind_assert(false); // should not appear inside a basic block
     }
 }
+
+void RiscvDesc::emitCalleeSaveTac(Tac *t) {
+    
+    callee_saved_regs[_callee_saved_counter]->var = t->op0.var;
+    callee_saved_regs[_callee_saved_counter]->dirty = true;
+    _callee_saved_counter++;
+    // std::cerr << "save $s" << _callee_saved_counter << " in " << t->op0.var << std::endl;
+}
+
+void RiscvDesc::emitCalleeRestoreTac(Tac *t) {
+    _callee_saved_counter--;
+    if(callee_saved_regs[_callee_saved_counter]->var != t->op0.var) {
+        // op0 is on the stack
+        mind_assert(t->op0.var->is_offset_fixed);
+        addInstr(RiscvInstr::LW, callee_saved_regs[_callee_saved_counter], _reg[RiscvReg::FP], NULL, t->op0.var->offset, EMPTY_STR, {});
+    }
+}
+
+
 
 /* Translates a LoadImm4 TAC into Riscv instructions.
  *
@@ -428,28 +467,65 @@ void RiscvDesc::emitAllocTac(Tac *t) {
 }
 
 void RiscvDesc::emitPushTac(Tac *t) {
-    int r0 = getRegForRead(t->op0.var, 0, t->LiveOut);
-    addInstr(RiscvInstr::SW, _reg[r0], _reg[RiscvReg::SP], NULL, (-4)+(-4*_param_counter), EMPTY_STR,
-             {});
+
+    if (_param_counter < 8) {
+        passParamReg(t, _param_counter); // pass param in register
+    } else {
+        if (_param_counter == 8) {
+            // save caller saved registers, because this function may
+            // modify sp, we must call it before storing params on stack
+            spillCallerSavedDirtyRegs(t->LiveOut);
+        }
+        
+        int i = lookupReg(t->op0.var);
+        int r0;
+        if (i<0){ // on the stack
+            // always use t0 to transfer param, we already spill caller saved regs
+            r0 = RiscvReg::T0;
+            addInstr(RiscvInstr::LW, _reg[RiscvReg::T0], _reg[RiscvReg::FP], NULL, t->op0.var->offset, EMPTY_STR, {});
+        } else{
+            r0 = i;
+        }
+        addInstr(RiscvInstr::SW, _reg[r0], _reg[RiscvReg::SP], NULL, (-4*(_param_counter-7)), EMPTY_STR,
+            {});
+    }
 
     _param_counter++;
 }
 
 void RiscvDesc::emitPopTac(Tac *t) {
-    int r0 = getRegForWrite(t->op0.var, 0, 0, t->LiveOut);
-    addInstr(RiscvInstr::LW, _reg[r0], _reg[RiscvReg::FP], NULL, 4*_param_counter, EMPTY_STR,
+    
+    if (_callee_param_counter < 8) {
+        // std::cerr<< "pop to "<< t->op0.var <<std::endl;
+        getParamReg(t, _callee_param_counter); // get param in register
+    } else {
+        int r0 = getRegForWrite(t->op0.var, 0, 0, t->LiveOut);
+        addInstr(RiscvInstr::LW, _reg[r0], _reg[RiscvReg::FP], NULL, 4*(_callee_param_counter-8), EMPTY_STR,
              {});
-    _param_counter++;
+    }
+
+    _callee_param_counter++;
 }
 
 void RiscvDesc::emitCallTac(Tac *t) {
-    spillDirtyRegs(t->LiveOut);
+    // std::cerr << "call " << t->op1.label->str_form << " with " << _param_counter << " params" << std::endl;
+    if (_param_counter <= 8){
+        spillCallerSavedDirtyRegs(t->LiveOut);
+    }
     // modify sp
-    addInstr(RiscvInstr::ADDI, _reg[RiscvReg::SP], _reg[RiscvReg::SP], NULL, -4*_param_counter, EMPTY_STR,
+    if (_param_counter > 8) {
+        addInstr(RiscvInstr::ADDI, _reg[RiscvReg::SP], _reg[RiscvReg::SP], NULL, -4*(_param_counter-8), EMPTY_STR,
              {});
-    addInstr(RiscvInstr::JAL, _reg[RiscvReg::RA], NULL, NULL, 0, "_" + t->op1.label->str_form, {});
-    addInstr(RiscvInstr::ADDI, _reg[RiscvReg::SP], _reg[RiscvReg::SP], NULL, 4*_param_counter, EMPTY_STR,
+    }
+
+
+    addInstr(RiscvInstr::JAL, _reg[RiscvReg::RA], NULL, NULL, 0, t->op1.label->str_form, {});
+    // restore sp
+    if (_param_counter > 8) {
+        addInstr(RiscvInstr::ADDI, _reg[RiscvReg::SP], _reg[RiscvReg::SP], NULL, 4*(_param_counter-8), EMPTY_STR,
              {});
+    }
+
     // set return value
     _reg[RiscvReg::A0]->var = t->op0.var;
     _reg[RiscvReg::A0]->dirty = true;
@@ -629,6 +705,8 @@ void RiscvDesc::emitFuncty(Functy f) {
     mind_assert(NULL != f);
 
     _param_counter = 0;
+    _callee_param_counter = 0;
+    _callee_saved_counter = 0;
 
     
     FlowGraph *g = FlowGraph::makeGraph(f);
@@ -1021,11 +1099,13 @@ int RiscvDesc::getRegForWrite(Temp v, int avoid1, int avoid2, LiveSet *live) {
             i = selectRegToSpill(avoid1, avoid2, live);
             spillReg(i, live);
         }
+        
         _reg[i]->var = v;
     }
 
     _reg[i]->dirty = true;
 
+    
     return i;
 }
 
@@ -1085,6 +1165,21 @@ void RiscvDesc::spillDirtyRegs(LiveSet *live) {
         for (; i < RiscvReg::TOTAL_NUM; ++i)
             spillReg(i, live);
     }
+}
+
+
+
+void RiscvDesc::spillCallerSavedDirtyRegs(LiveSet *live) {
+    
+    addInstr(RiscvInstr::COMMENT, NULL, NULL, NULL, 0, EMPTY_STR,
+                 "(save caller saved registers)");
+
+    for (int i = 0; i < RiscvReg::TOTAL_NUM; ++i) {
+        if(_reg[i]->caller_saved) {
+            spillReg(i, live);
+        }
+    }
+
 }
 
 /* Looks up a register containing the specified variable.

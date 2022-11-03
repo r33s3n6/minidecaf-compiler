@@ -56,8 +56,16 @@ void Translation::visit(ast::Program *p) {
 void Translation::visit(ast::FuncDefn *f) {
     Function *fun = f->ATTR(sym);
 
-    // attaching function entry label
-    fun->attachEntryLabel(tr->getNewEntryLabel(fun));
+    
+    if (fun->getEntryLabel() == nullptr) {
+            // attaching function entry label
+        fun->attachEntryLabel(tr->getNewEntryLabel(fun));
+    }
+
+    if (f->forward_decl) {
+        return;
+    }
+
 
     // arguments
     int order = 0;
@@ -74,6 +82,12 @@ void Translation::visit(ast::FuncDefn *f) {
 
     tr->startFunc(fun);
 
+    // save callee-saved registers
+    for (int i=0;i<11;i++){
+        callee_save_regs[i] = tr->genCalleeSave();
+    }
+
+    // get parameters
     for (auto it = f->formals->begin(); it != f->formals->end(); ++it) {
         auto v = (*it)->ATTR(sym);
         tr->genPop(v->getTemp());
@@ -84,6 +98,11 @@ void Translation::visit(ast::FuncDefn *f) {
     for (auto it = f->stmts->begin(); it != f->stmts->end(); ++it)
         (*it)->accept(this);
 
+
+    // restore callee-saved registers
+    for (int i=10;i>=0;i--){
+        tr->genCalleeRestore(callee_save_regs[i]);
+    }
     tr->genReturn(tr->genLoadImm4(0)); // Return 0 by default
 
     tr->endFunc();
@@ -95,12 +114,26 @@ void Translation::visit(ast::CallExpr *e) {
     for (auto it = e->args->begin(); it != e->args->end(); ++it)
         (*it)->accept(this);
 
-    // push the arguments in reverse order
-    for (auto it = e->args->rbegin(); it != e->args->rend(); ++it) {
-        tr->genPush((*it)->ATTR(val));
-    }
 
-    Temp ret = tr->genCall(e->ATTR(sym)->getEntryLabel());
+    int param_count = e->args->length();
+    auto it = e->args->begin();
+    for (int i=0;i<param_count;i++){
+        tr->genPush((*it)->ATTR(val));
+        it++;
+    }
+    if (param_count > 8){
+        // push the arguments in reverse order
+        auto it = e->args->rbegin();
+        for (int i=0;i<param_count-8;i++){
+            tr->genPush((*it)->ATTR(val));
+            it++;
+        }
+    }
+    
+    Function* fun = e->ATTR(sym);
+
+    Temp ret = tr->genCall(fun->getEntryLabel());
+
 
     e->ATTR(val) = ret;
     
@@ -271,6 +304,9 @@ void Translation::visit(ast::CompStmt *c) {
  */
 void Translation::visit(ast::ReturnStmt *s) {
     s->e->accept(this);
+    for (int i=10;i>=0;i--){
+        tr->genCalleeRestore(callee_save_regs[i]);
+    }
     tr->genReturn(s->e->ATTR(val));
 }
 

@@ -76,6 +76,8 @@ class TransHelper {
     Temp genAlloc(int);
     void genMarkLabel(Label);
     void genMemo(const char *);
+    Temp genCalleeSave();
+    void genCalleeRestore(Temp);
 
     // gets the entire Piece list
     Piece *getPiece();
