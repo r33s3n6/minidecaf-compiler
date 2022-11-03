@@ -180,6 +180,7 @@ class RiscvDesc : public MachineDesc {
     void emitLoadSymbolTac(tac::Tac *);
     void emitLoadTac(tac::Tac *);
     void emitStoreTac(tac::Tac *);
+    void emitAllocTac(tac::Tac *);
 
     void emitPushTac(tac::Tac *t);
     void emitPopTac(tac::Tac *t);

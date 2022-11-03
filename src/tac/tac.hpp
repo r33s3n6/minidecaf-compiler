@@ -97,6 +97,7 @@ struct Tac {
         LOAD,
         LOAD_SYMBOL,
         STORE,
+        ALLOC,
         MEMO
     } Kind;
 
@@ -145,12 +146,14 @@ struct Tac {
     static Tac *Load(Temp dest, Temp base_addr, int offset);
     static Tac *LoadSymbol(Temp dest, std::string name);
     static Tac *Store(Temp src, Temp base_addr, int offset);
+    static Tac *Alloc(Temp dest, int size);
     static Tac *Jump(Label dest);
     static Tac *JZero(Label dest, Temp cond);
     static Tac *Pop(Temp dest);
     static Tac *Push(Temp src);
     static Tac *Call(Temp dest, Label func);
     static Tac *Return(Temp value);
+
     static Tac *Mark(Label label);
     static Tac *Memo(const char *);
 

@@ -491,6 +491,12 @@ void TransHelper::genStore(Temp value, Temp base_addr, int offset) {
 
 }
 
+Temp TransHelper::genAlloc(int size) {
+    Temp c = getNewTempI4();
+    chainUp(Tac::Alloc(c, size));
+    return c;
+}
+
 /* Appends a MarkLabel tac node to the current list.
  *
  * PARAMETERS:

@@ -65,6 +65,10 @@ class BaseType : public Type {
     // don't call the constructor explictly
     BaseType(const char *);
 
+    // no copy
+    BaseType(const BaseType &) = delete;
+    BaseType &operator=(const BaseType &) = delete;
+
   public:
     // Tests whether it is a BaseType
     virtual bool isBaseType(void);

@@ -31,6 +31,7 @@ class SemPass2 : public ast::Visitor {
     virtual void visit(ast::IntConst *);
     // lvalues
     virtual void visit(ast::VarRef *);
+    virtual void visit(ast::ArrayRef *);
 
     // Visiting expressions
     // unary operator
@@ -187,10 +188,41 @@ void SemPass2::visit(ast::VarRef *ref) {
     Variable *v = ref->ATTR(sym);
 
     ref->ATTR(type) = v->getType();
+    
+    // std::cerr << ref->ATTR(type) << std::endl;
 
-    if (((Variable *)v)->isLocalVar()) {
+    // local int is simple, array, globals are memory vars
+    if (!v->isGlobalVar() && ref->ATTR(type)->equal(BaseType::Int)) {
+        
         ref->ATTR(lv_kind) = ast::Lvalue::SIMPLE_VAR;
+    } else {
+        ref->ATTR(lv_kind) = ast::Lvalue::MEM_VAR;
     }
+
+    return;
+
+}
+
+void SemPass2::visit(ast::ArrayRef *ref) {
+    // CASE I: owner is NULL ==> referencing a local var or a member var?
+
+    ref->arr_base->accept(this);
+
+    ref->index->accept(this);
+    expect(ref->index, BaseType::Int);
+
+    ArrayType* arr_type = dynamic_cast<ArrayType*>(ref->arr_base->ATTR(type));
+
+    if (!arr_type) {
+        issue(ref->getLocation(), new SyntaxError("base type is not array"));
+        ref->ATTR(type) = BaseType::Error;
+        return;
+    }
+
+    ref->ATTR(type) = arr_type->getElementType();
+
+    ref->ATTR(lv_kind) = ast::Lvalue::MEM_VAR;
+
 
     return;
 

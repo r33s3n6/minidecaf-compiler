@@ -42,9 +42,9 @@ class Translation : public ast::Visitor {
     // constants
     virtual void visit(ast::IntConst *);
 
-        // lvalues
+    // lvalues
     virtual void visit(ast::VarRef *);
-
+    virtual void visit(ast::ArrayRef *);
 
     // expressions
     // unary operator

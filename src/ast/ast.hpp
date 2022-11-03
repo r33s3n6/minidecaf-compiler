@@ -50,6 +50,7 @@ class ASTNode {
         IF_EXPR,
         INT_CONST,
         INT_TYPE,
+        ARRAY_TYPE,
         LEQ_EXPR,
         LES_EXPR,
         LVALUE_EXPR,
@@ -65,6 +66,7 @@ class ASTNode {
         SUB_EXPR,
         VAR_DECL,
         VAR_REF,
+        ARRAY_REF,
         WHILE_STMT,
         FOR_STMT,
         DO_WHILE_STMT,
@@ -148,11 +150,12 @@ class Lvalue : public ASTNode {
   public:
     enum {
         SIMPLE_VAR, // referencing simple variable
-        ARRAY_ELE   // referencing array element
+        MEM_VAR,    // referencing content at the address
     } ATTR(lv_kind);
 
     type::Type *ATTR(type); // for semantic analysis
-    symb::Variable *ATTR(sym); // for tac generation
+    tac::Temp ATTR(addr); 
+
 };
 
 /* Node representing a program.
@@ -244,6 +247,19 @@ class IntType : public Type {
 
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
+};
+
+class ArrayType : public Type {
+  public:
+    ArrayType(Type *elem_type, DimList* dims, Location *l);
+    virtual void accept(Visitor *);
+    virtual void dumpTo(std::ostream &);
+
+
+  public:
+    Type *elem_type;
+    DimList* dims;
+
 };
 
 /* Node representing the Boolean type.
@@ -427,8 +443,22 @@ class VarRef : public Lvalue {
   public:
     Expr *owner; // only to pass compilation, not used
     std::string var;
+    symb::Variable *ATTR(sym); // for tac generation
 
+};
 
+class ArrayRef : public Lvalue {
+  public:
+    ArrayRef(Lvalue* arr_base, Expr * index, Location *l);
+
+    virtual void accept(Visitor *);
+    virtual void dumpTo(std::ostream &);
+
+  public:
+    Lvalue* arr_base;
+    Expr * index;
+
+    // type::Type* ATTR(base_type);
 };
 
 class PointerRef : public Lvalue {
@@ -459,6 +489,7 @@ class LvalueExpr : public Expr {
 
   public:
     Lvalue *lvalue;
+
     // Expr* 	 rvalue;
 };
 /* Node representing an integer constant .

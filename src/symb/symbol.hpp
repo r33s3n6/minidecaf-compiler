@@ -73,12 +73,13 @@ class Variable : public Symbol {
   private:
     // the parameter flag
     bool is_parameter;
-    // the attached register object
+    // the attached temp (only used in local variable) (address or register)
     tac::Temp attached;
     // init value for global variable
     int global_init;
 
   public:
+
     // Constructor
     Variable(std::string n, type::Type *t, Location *l);
     // Sets the parameter flag
