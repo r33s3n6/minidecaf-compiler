@@ -374,9 +374,12 @@ void RiscvDesc::emitCalleeSaveTac(Tac *t) {
 void RiscvDesc::emitCalleeRestoreTac(Tac *t) {
     _callee_saved_counter--;
     if(callee_saved_regs[_callee_saved_counter]->var != t->op0.var) {
+        spillReg(_callee_saved_counter, t->LiveOut);
         // op0 is on the stack
         mind_assert(t->op0.var->is_offset_fixed);
         addInstr(RiscvInstr::LW, callee_saved_regs[_callee_saved_counter], _reg[RiscvReg::FP], NULL, t->op0.var->offset, EMPTY_STR, {});
+        callee_saved_regs[_callee_saved_counter]->var = t->op0.var;
+
     }
 }
 
