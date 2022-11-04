@@ -42,7 +42,7 @@ YY_DECL;
 
 %{
   // Code run each time a pattern is matched.
-  # define YY_USER_ACTION  loc.columns (yyleng);
+  # define YY_USER_ACTION  loc.step(); loc.columns (yyleng);
 %}
 %{
   // A number symbol corresponding to the value in S.
