@@ -38,6 +38,7 @@ Translation::Translation(tac::TransHelper *helper) {
 /* Translating an ast::Program node.
  */
 void Translation::visit(ast::Program *p) {
+    
     for (auto it = p->func_and_globals->begin();
          it != p->func_and_globals->end(); ++it)
         (*it)->accept(this);
@@ -159,7 +160,7 @@ void Translation::visit(ast::AssignExpr *s) {
         tr->genAssign(ref->ATTR(sym)->getTemp(), s->e->ATTR(val));
         break;
     case ast::Lvalue::MEM_VAR:   // load address
-        tr->genStore(s->e->ATTR(val), s->left->ATTR(addr), 0);
+        tr->genStore(s->e->ATTR(val), s->left->ATTR(val), 0);
         break;
     default:
         mind_assert(false); // impossible
@@ -463,16 +464,12 @@ void Translation::visit(ast::BitNotExpr *e) {
 void Translation::visit(ast::LvalueExpr *e) {
     e->lvalue->accept(this);
 
-    ast::VarRef *ref;
-
     switch (e->lvalue->ATTR(lv_kind)) {
     case ast::Lvalue::SIMPLE_VAR:
-        ref = dynamic_cast<ast::VarRef *>(e->lvalue);
-        mind_assert(ref);
-        e->ATTR(val) =ref->ATTR(sym)->getTemp();
+        e->ATTR(val) = e->lvalue->ATTR(val);
         break;
     case ast::Lvalue::MEM_VAR:   // load address
-        e->ATTR(val) = tr->genLoad(e->lvalue->ATTR(addr), 0);
+        e->ATTR(val) = tr->genLoad(e->lvalue->ATTR(val), 0);
         break;
     default:
         mind_assert(false); // impossible
@@ -489,23 +486,11 @@ void Translation::visit(ast::LvalueExpr *e) {
  */
 void Translation::visit(ast::VarRef *ref) {
     symb::Variable *var;
-
-    switch (ref->ATTR(lv_kind)) {
-    case ast::Lvalue::SIMPLE_VAR:
-        // nothing to do
-        break;
-    case ast::Lvalue::MEM_VAR:   // load address
-        var = dynamic_cast<symb::Variable *>(ref->ATTR(sym));
-        mind_assert(var);
-        if(var->isGlobalVar()){
-            ref->ATTR(addr) = tr->genLoadSymbol(var);
-        }else{
-            ref->ATTR(addr) = var->getTemp();
-        }
-        
-        break;
-    default:
-        mind_assert(false); // impossible
+    var = dynamic_cast<symb::Variable *>(ref->ATTR(sym));
+    if (var->isGlobalVar()){
+        ref->ATTR(val) = tr->genLoadSymbol(var);
+    } else{
+        ref->ATTR(val) = var->getTemp();
     }
     // actually it is so simple :-)
 }
@@ -518,7 +503,7 @@ void Translation::visit(ast::ArrayRef *ref) {
     int elem_size = ref->ATTR(type)->getSize();
 
     // compute offset
-    ref->ATTR(addr) = tr->genAdd(ref->arr_base->ATTR(addr),
+    ref->ATTR(val) = tr->genAdd(ref->arr_base->ATTR(val),
                                  tr->genMul(ref->index->ATTR(val),
                                             tr->genLoadImm4(elem_size)));
 
@@ -548,7 +533,26 @@ void Translation::visit(ast::VarDecl *decl) {
                 tr->genAssign(decl->ATTR(sym)->getTemp(), decl->init->ATTR(val));
             }
         }else{
-            var->attachTemp(tr->genAlloc(var->getType()->getSize()));
+            int max_size = var->getType()->getSize();
+            var->attachTemp(tr->genAlloc(max_size));
+            if (var->array_init) {
+                int i = 0;
+                for (auto val: *var->array_init) {
+                    tr->genStore(tr->genLoadImm4(val), var->getTemp(), i*4);
+                    i++;
+                }
+
+                // memset (fill_n)
+                tr->genPush(tr->genAdd(var->getTemp(), tr->genLoadImm4(i*4)));
+                tr->genPush(tr->genLoadImm4(max_size/4 - i));
+                tr->genPush(tr->genLoadImm4(0));
+
+                tr->genCall(tr->getNewLabel("fill_n"));
+                
+                // for (; i < max_size/4; i++) {
+                //     tr->genStore(tr->genLoadImm4(0), var->getTemp(), i*4);
+                // }
+            }
         } 
         
     }

@@ -34,6 +34,7 @@ class TransHelper {
     Label getNewLabel(void);
     // allocates a new entry Label object for function
     Label getNewEntryLabel(symb::Function *);
+    Label getNewLabel(std::string name);
     // starts to translate a function
     void startFunc(symb::Function *);
     // ends translating a function

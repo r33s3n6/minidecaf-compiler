@@ -38,7 +38,7 @@ void IntType::dumpTo(std::ostream &os) {
     decIndent(os);
 }
 
-ArrayType::ArrayType(Type *elem_type, DimList* dims, Location *l) : elem_type(elem_type), dims(dims) {
+ArrayType::ArrayType(Type *elem_type, IntList* dims, Location *l) : elem_type(elem_type), dims(dims) {
     setBasicInfo(ARRAY_TYPE, l);
 }
 

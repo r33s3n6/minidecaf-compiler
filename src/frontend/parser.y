@@ -101,7 +101,8 @@ void scan_end();
 %nterm <mind::ast::Expr*>       Expr OptionalExpr 
 %nterm <mind::ast::Lvalue*>     Lvalue
 %nterm <mind::ast::ASTNode*>    FuncOrDecl
-%nterm <mind::ast::DimList*>    DimList
+%nterm <mind::ast::IntList*>    DimList ParamDimList InitIntList NonNullInitIntList
+%nterm <mind::ast::VarDecl*>    ParamVarDecl
 
 /*   SUBSECTION 2.2: associativeness & precedences */
 %right    "then" "else"
@@ -160,16 +161,24 @@ FormalList  : /* empty */
                 { $$ = $1; }
             ;
 NonNullFormalList
-            : Type IDENTIFIER
+            : ParamVarDecl
                 { 
                     $$ = new ast::VarList();
-                    $$->append(new ast::VarDecl($2, $1, POS(@1)));
+                    $$->append($1);
                 } 
-            | FormalList "," Type IDENTIFIER
+            | NonNullFormalList "," ParamVarDecl
                 {
-                  $$ = $1;
-                  $$->append(new ast::VarDecl($4, $3, POS(@3)));
+                    $1->append($3);
+                    $$ = $1;
                 }
+            ;
+ParamVarDecl
+            : Type IDENTIFIER
+                { 
+                    $$ = new ast::VarDecl($2, $1, POS(@1));
+                } 
+            | Type IDENTIFIER ParamDimList
+                { $$ = new ast::VarDecl($2, new ast::ArrayType($1, $3, POS(@3)),  POS(@1)); } 
             ;
 Type        : INT
                 { $$ = new ast::IntType(POS(@1)); }
@@ -236,10 +245,30 @@ VarDecl     : Type IDENTIFIER ";"
                 { $$ = new ast::VarDecl($2, $1, $4, POS(@1)); }
             | Type IDENTIFIER DimList ";"
                 { $$ = new ast::VarDecl($2, new ast::ArrayType($1, $3, POS(@3)),  POS(@1)); }
+            | Type IDENTIFIER DimList "=" "{" InitIntList "}" ";"
+                { $$ = new ast::VarDecl($2, new ast::ArrayType($1, $3, POS(@3)), $6, POS(@1)); }
             ;
 DimList     : "[" ICONST "]"
                 { $$ = new util::List<int>(); $$->append($2); }
             | DimList "[" ICONST "]"
+                { $$ = $1; $1->append($3); }
+            ;
+ParamDimList: "[" "]"
+                { $$ = new util::List<int>(); $$->append(1); }
+            | "[" ICONST "]"
+                { $$ = new util::List<int>(); $$->append($2); }
+            | ParamDimList "[" ICONST "]"
+                { $$ = $1; $1->append($3); }
+            ;
+InitIntList : /* empty */
+                { $$ = new util::List<int>(); }
+            | NonNullInitIntList
+                { $$ = $1;  }
+            ;
+NonNullInitIntList
+            : ICONST
+                { $$ = new util::List<int>(); $$->append($1);  }
+            | NonNullInitIntList "," ICONST
                 { $$ = $1; $1->append($3); }
             ;
 Expr        : ICONST

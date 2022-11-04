@@ -191,12 +191,11 @@ void SemPass2::visit(ast::VarRef *ref) {
     
     // std::cerr << ref->ATTR(type) << std::endl;
 
-    // local int is simple, array, globals are memory vars
-    if (!v->isGlobalVar() && ref->ATTR(type)->equal(BaseType::Int)) {
-        
-        ref->ATTR(lv_kind) = ast::Lvalue::SIMPLE_VAR;
-    } else {
+    // local int, array is simple, globals are memory vars
+    if (v->isGlobalVar() && !v->getType()->isArrayType()) {
         ref->ATTR(lv_kind) = ast::Lvalue::MEM_VAR;
+    } else {
+        ref->ATTR(lv_kind) = ast::Lvalue::SIMPLE_VAR; // here array is address
     }
 
     return;
@@ -220,8 +219,12 @@ void SemPass2::visit(ast::ArrayRef *ref) {
     }
 
     ref->ATTR(type) = arr_type->getElementType();
-
-    ref->ATTR(lv_kind) = ast::Lvalue::MEM_VAR;
+    if (ref->ATTR(type)->isArrayType()){
+        ref->ATTR(lv_kind) = ast::Lvalue::SIMPLE_VAR; // pointer
+    } else {
+        ref->ATTR(lv_kind) = ast::Lvalue::MEM_VAR; // dereference
+    }
+    
 
 
     return;
@@ -234,8 +237,11 @@ void SemPass2::visit(ast::ArrayRef *ref) {
  *   decl     - the ast::VarDecl node
  */
 void SemPass2::visit(ast::VarDecl *decl) {
-    if (decl->init)
+    if (decl->init) {
         decl->init->accept(this);
+        expect(decl->init, decl->type->ATTR(type));
+    }
+        
 }
 
 /* Visits an ast::AssignStmt node.
@@ -251,6 +257,10 @@ void SemPass2::visit(ast::AssignExpr *s) {
         !s->e->ATTR(type)->compatible(s->left->ATTR(type))) {
         issue(s->getLocation(),
               new IncompatibleError(s->left->ATTR(type), s->e->ATTR(type)));
+    }
+
+    if (s->left->ATTR(type)->isArrayType()) {
+        issue(s->getLocation(), new SyntaxError("cannot assign to array"));
     }
 
     s->ATTR(type) = s->left->ATTR(type);

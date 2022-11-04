@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "*.cpp": "cpp",
+        "*.vt": "verilog",
+        "iosfwd": "cpp",
+        "array": "cpp",
+        "string_view": "cpp"
+    }
+}

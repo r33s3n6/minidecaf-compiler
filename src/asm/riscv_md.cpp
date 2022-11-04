@@ -42,38 +42,38 @@ RiscvDesc::RiscvDesc(void) {
     // initializes the register vector
     // (we regard all general-purpose registers as caller-saved, which is
     // different from the Riscv specification)
-    _reg[RiscvReg::ZERO] = new RiscvReg("zero", false, false, false); // zero
-    _reg[RiscvReg::RA]   = new RiscvReg("ra",   false, false, false); // return address (actually it is caller-saved, 
-    _reg[RiscvReg::SP]   = new RiscvReg("sp",   false, false, false); // stack pointer      but we already handle it in the frame manager)
-    _reg[RiscvReg::GP]   = new RiscvReg("gp",   false, false, false); // global pointer
-    _reg[RiscvReg::TP]   = new RiscvReg("tp",   false, false, false); // thread pointer
-    _reg[RiscvReg::T0]   = new RiscvReg("t0",   true,  true,  false);
-    _reg[RiscvReg::T1]   = new RiscvReg("t1",   true,  true,  false);
-    _reg[RiscvReg::T2]   = new RiscvReg("t2",   true,  true,  false);
-    _reg[RiscvReg::T3]   = new RiscvReg("t3",   true,  true,  false);
-    _reg[RiscvReg::T4]   = new RiscvReg("t4",   true,  true,  false);
-    _reg[RiscvReg::T5]   = new RiscvReg("t5",   true,  true,  false);
-    _reg[RiscvReg::T6]   = new RiscvReg("t6",   true,  true,  false); // t0-t6 are caller-saved
-    _reg[RiscvReg::FP]   = new RiscvReg("fp",   false, false, false); // frame pointer
-    _reg[RiscvReg::S1]   = new RiscvReg("s1",   true,  false, true ); 
-    _reg[RiscvReg::S2]   = new RiscvReg("s2",   true,  false, true );
-    _reg[RiscvReg::S3]   = new RiscvReg("s3",   true,  false, true );
-    _reg[RiscvReg::S4]   = new RiscvReg("s4",   true,  false, true );
-    _reg[RiscvReg::S5]   = new RiscvReg("s5",   true,  false, true );
-    _reg[RiscvReg::S6]   = new RiscvReg("s6",   true,  false, true );
-    _reg[RiscvReg::S7]   = new RiscvReg("s7",   true,  false, true );
-    _reg[RiscvReg::S8]   = new RiscvReg("s8",   true,  false, true );
-    _reg[RiscvReg::S9]   = new RiscvReg("s9",   true,  false, true );
-    _reg[RiscvReg::S10]  = new RiscvReg("s10",  true,  false, true );
-    _reg[RiscvReg::S11]  = new RiscvReg("s11",  true,  false, true ); // s1-s11 are callee-saved
-    _reg[RiscvReg::A0]   = new RiscvReg("a0",   true,  true,  false); // argument, return value
-    _reg[RiscvReg::A1]   = new RiscvReg("a1",   true,  true,  false); // argument, return value
-    _reg[RiscvReg::A2]   = new RiscvReg("a2",   true,  true,  false); // argument
-    _reg[RiscvReg::A3]   = new RiscvReg("a3",   true,  true,  false); // argument
-    _reg[RiscvReg::A4]   = new RiscvReg("a4",   true,  true,  false); // argument
-    _reg[RiscvReg::A5]   = new RiscvReg("a5",   true,  true,  false); // argument
-    _reg[RiscvReg::A6]   = new RiscvReg("a6",   true,  true,  false); // argument
-    _reg[RiscvReg::A7]   = new RiscvReg("a7",   true,  true,  false); // argument, a0-a7 are caller-saved
+    _reg[RiscvReg::ZERO] = new RiscvReg(RiscvReg::ZERO, "zero", false, false, false); // zero
+    _reg[RiscvReg::RA]   = new RiscvReg(RiscvReg::RA  , "ra",   false, false, false); // return address (actually it is caller-saved, 
+    _reg[RiscvReg::SP]   = new RiscvReg(RiscvReg::SP  , "sp",   false, false, false); // stack pointer      but we already handle it in the frame manager)
+    _reg[RiscvReg::GP]   = new RiscvReg(RiscvReg::GP  , "gp",   false, false, false); // global pointer
+    _reg[RiscvReg::TP]   = new RiscvReg(RiscvReg::TP  , "tp",   false, false, false); // thread pointer
+    _reg[RiscvReg::T0]   = new RiscvReg(RiscvReg::T0  , "t0",   true,  true,  false);
+    _reg[RiscvReg::T1]   = new RiscvReg(RiscvReg::T1  , "t1",   true,  true,  false);
+    _reg[RiscvReg::T2]   = new RiscvReg(RiscvReg::T2  , "t2",   true,  true,  false);
+    _reg[RiscvReg::T3]   = new RiscvReg(RiscvReg::T3  , "t3",   true,  true,  false);
+    _reg[RiscvReg::T4]   = new RiscvReg(RiscvReg::T4  , "t4",   true,  true,  false);
+    _reg[RiscvReg::T5]   = new RiscvReg(RiscvReg::T5  , "t5",   true,  true,  false);
+    _reg[RiscvReg::T6]   = new RiscvReg(RiscvReg::T6  , "t6",   true,  true,  false); // t0-t6 are caller-saved
+    _reg[RiscvReg::FP]   = new RiscvReg(RiscvReg::FP  , "fp",   false, false, false); // frame pointer
+    _reg[RiscvReg::S1]   = new RiscvReg(RiscvReg::S1  , "s1",   true,  false, true ); 
+    _reg[RiscvReg::S2]   = new RiscvReg(RiscvReg::S2  , "s2",   true,  false, true );
+    _reg[RiscvReg::S3]   = new RiscvReg(RiscvReg::S3  , "s3",   true,  false, true );
+    _reg[RiscvReg::S4]   = new RiscvReg(RiscvReg::S4  , "s4",   true,  false, true );
+    _reg[RiscvReg::S5]   = new RiscvReg(RiscvReg::S5  , "s5",   true,  false, true );
+    _reg[RiscvReg::S6]   = new RiscvReg(RiscvReg::S6  , "s6",   true,  false, true );
+    _reg[RiscvReg::S7]   = new RiscvReg(RiscvReg::S7  , "s7",   true,  false, true );
+    _reg[RiscvReg::S8]   = new RiscvReg(RiscvReg::S8  , "s8",   true,  false, true );
+    _reg[RiscvReg::S9]   = new RiscvReg(RiscvReg::S9  , "s9",   true,  false, true );
+    _reg[RiscvReg::S10]  = new RiscvReg(RiscvReg::S10 , "s10",  true,  false, true );
+    _reg[RiscvReg::S11]  = new RiscvReg(RiscvReg::S11 , "s11",  true,  false, true ); // s1-s11 are callee-saved
+    _reg[RiscvReg::A0]   = new RiscvReg(RiscvReg::A0  , "a0",   true,  true,  false); // argument, return value
+    _reg[RiscvReg::A1]   = new RiscvReg(RiscvReg::A1  , "a1",   true,  true,  false); // argument, return value
+    _reg[RiscvReg::A2]   = new RiscvReg(RiscvReg::A2  , "a2",   true,  true,  false); // argument
+    _reg[RiscvReg::A3]   = new RiscvReg(RiscvReg::A3  , "a3",   true,  true,  false); // argument
+    _reg[RiscvReg::A4]   = new RiscvReg(RiscvReg::A4  , "a4",   true,  true,  false); // argument
+    _reg[RiscvReg::A5]   = new RiscvReg(RiscvReg::A5  , "a5",   true,  true,  false); // argument
+    _reg[RiscvReg::A6]   = new RiscvReg(RiscvReg::A6  , "a6",   true,  true,  false); // argument
+    _reg[RiscvReg::A7]   = new RiscvReg(RiscvReg::A7  , "a7",   true,  true,  false); // argument, a0-a7 are caller-saved
 
     callee_saved_regs[0] = _reg[RiscvReg::S1];
     callee_saved_regs[1] = _reg[RiscvReg::S2];
@@ -124,7 +124,7 @@ void RiscvDesc::emitPieces(scope::GlobalScope *gscope, Piece *ps,
             symb::Function *func = dynamic_cast<symb::Function*>(*it);
             if (var) {
                 if (var->isGlobalVar()) {
-                    if(var->getGlobalInit() == 0){
+                    if(var->getGlobalInit() == 0 && var->array_init == nullptr) {
                         bss_vars.append(var);
                     } else {
                         data_vars.append(var);
@@ -148,7 +148,17 @@ void RiscvDesc::emitPieces(scope::GlobalScope *gscope, Piece *ps,
             symb::Variable *sym = *it;
             emit(EMPTY_STR, (".global " + sym->getName()).c_str(), NULL);
             emit(sym->getName(), NULL, NULL);
-            emit(EMPTY_STR, (".word " + std::to_string(sym->getGlobalInit())).c_str(), NULL);
+            if(sym->getGlobalInit()) {
+                emit(EMPTY_STR, (".word " + std::to_string(sym->getGlobalInit())).c_str(), NULL);
+            } else {
+                int i = 0;
+                for (auto val : *sym->array_init) {
+                    emit(EMPTY_STR, (".word " + std::to_string(val)).c_str(), NULL);
+                    i++;
+                }
+                emit(EMPTY_STR, (".zero " + std::to_string(sym->getType()->getSize() - i*4)).c_str(), NULL);
+            }
+            
         }
 
         // .bss segment
@@ -374,7 +384,7 @@ void RiscvDesc::emitCalleeSaveTac(Tac *t) {
 void RiscvDesc::emitCalleeRestoreTac(Tac *t) {
     _callee_saved_counter--;
     if(callee_saved_regs[_callee_saved_counter]->var != t->op0.var) {
-        spillReg(_callee_saved_counter, t->LiveOut);
+        spillReg(callee_saved_regs[_callee_saved_counter]->id, t->LiveOut);
         // op0 is on the stack
         mind_assert(t->op0.var->is_offset_fixed);
         addInstr(RiscvInstr::LW, callee_saved_regs[_callee_saved_counter], _reg[RiscvReg::FP], NULL, t->op0.var->offset, EMPTY_STR, {});

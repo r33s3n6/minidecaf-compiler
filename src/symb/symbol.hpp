@@ -80,9 +80,10 @@ class Variable : public Symbol {
     tac::Temp attached;
     // init value for global variable
     int global_init;
+    
 
   public:
-
+    util::List<int> *array_init;
     // Constructor
     Variable(std::string n, type::Type *t, Location *l);
     // Sets the parameter flag

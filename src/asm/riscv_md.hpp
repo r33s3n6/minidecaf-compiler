@@ -59,7 +59,7 @@ struct RiscvReg {
         T6,
         TOTAL_NUM // total number to registers
     };
-
+    int id;
     const char *name; // register name
     tac::Temp var;    // associated variable
     bool dirty;       // whether it is out of sychronized with the memory
@@ -68,9 +68,9 @@ struct RiscvReg {
     bool callee_saved; // whether it is a callee-saved register
 
     // two constructors for convenience
-    RiscvReg(const char *reg_name, bool is_general, bool caller_saved,
+    RiscvReg(int id, const char *reg_name, bool is_general, bool caller_saved,
              bool callee_saved)
-        : name(reg_name), var(nullptr), dirty(false), general(is_general),
+        : id(id), name(reg_name), var(nullptr), dirty(false), general(is_general),
           caller_saved(caller_saved), callee_saved(callee_saved) {};
     RiscvReg() {}
 };

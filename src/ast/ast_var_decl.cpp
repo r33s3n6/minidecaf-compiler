@@ -37,13 +37,15 @@ VarDecl::VarDecl(std::string n, Type *t, Expr *i, Location *l) {
     init = i;
 }
 
-VarDecl::VarDecl(std::string n, Type *t, int d, Location *l) {
+VarDecl::VarDecl(std::string n, Type *t, IntList* _arr_init, Location *l) {
 
     setBasicInfo(VAR_DECL, l);
 
     name = n;
     type = t;
     init = NULL;
+    mind_assert(_arr_init!=nullptr);
+    arr_init = _arr_init;
 }
 
 /* Visits the current node.

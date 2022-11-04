@@ -95,6 +95,9 @@ void SemPass1::visit(ast::Program *prog) {
     prog->ATTR(gscope) = new GlobalScope();
     scopes->open(prog->ATTR(gscope));
 
+    // add built-in functions
+    // scopes->declare(new Function("fill_n", BaseType::Int, new Location(1,1)));
+
     // visit global variables and each function
     for (auto it = prog->func_and_globals->begin();
          it != prog->func_and_globals->end(); ++it) {
@@ -414,6 +417,10 @@ void SemPass1::visit(ast::VarDecl *vdecl) {
             v->setGlobalInit(init->value);
         }
     }
+
+    v->array_init = vdecl->arr_init;
+
+    // std::cerr << "VarDecl: " << vdecl->name  << ", arr_init: " << (void*) v->array_init<< std::endl;
 
     // Tag the symbol to `vdecl->ATTR(sym)`
     vdecl->ATTR(sym) = v;

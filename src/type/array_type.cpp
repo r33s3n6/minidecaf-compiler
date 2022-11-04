@@ -55,10 +55,10 @@ int ArrayType::getSize() { return element_type->getSize() * length; }
 bool ArrayType::compatible(Type *t) {
     mind_assert(NULL != t);
 
-    if (t->equal(BaseType::Error))
-        return true;
-    else
+    if (!t->isArrayType())
         return false;
+    else
+        return (element_type->equal(((ArrayType *)t)->element_type));
 }
 
 /* Tests whether this type is equal to the given type.

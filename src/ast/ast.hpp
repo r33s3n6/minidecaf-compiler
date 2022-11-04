@@ -154,7 +154,7 @@ class Lvalue : public ASTNode {
     } ATTR(lv_kind);
 
     type::Type *ATTR(type); // for semantic analysis
-    tac::Temp ATTR(addr); 
+    tac::Temp ATTR(val); 
 
 };
 
@@ -186,7 +186,7 @@ class Program : public ASTNode {
 class VarDecl : public Statement {
   public:
     VarDecl(std::string name, Type *type, Location *l);
-    VarDecl(std::string name, Type *type, int dim, Location *l);
+    VarDecl(std::string name, Type *type, IntList* init, Location *l);
 
     VarDecl(std::string name, Type *type, Expr *init, Location *l);
     virtual void accept(Visitor *);
@@ -196,6 +196,7 @@ class VarDecl : public Statement {
     std::string name;
     Type *type;
     Expr *init;
+    IntList* arr_init = nullptr;
 
     symb::Variable *ATTR(sym); // for semantic analysis
 };
@@ -251,14 +252,15 @@ class IntType : public Type {
 
 class ArrayType : public Type {
   public:
-    ArrayType(Type *elem_type, DimList* dims, Location *l);
+    ArrayType(Type *elem_type, IntList* dims, Location *l);
     virtual void accept(Visitor *);
     virtual void dumpTo(std::ostream &);
 
 
   public:
     Type *elem_type;
-    DimList* dims;
+    IntList* dims;
+    
 
 };
 

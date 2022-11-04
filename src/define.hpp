@@ -97,7 +97,7 @@ class FuncOrGlobal;
 // the lists are not ASTNode
 typedef util::List<FuncDefn *> FuncList;        // list of Function
 typedef util::List<VarDecl *> VarList;          // list of VarDecl
-typedef util::List<int> DimList;                // list of VarDecl
+typedef util::List<int> IntList;                // list of Int
 typedef util::List<Statement *> StmtList;       // list of Statement
 typedef util::List<Expr *> ExprList;            // list of Expr
 typedef util::List<ASTNode *> FuncOrGlobalList; // list of Expr
